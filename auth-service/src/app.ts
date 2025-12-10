@@ -14,7 +14,6 @@ export async function createApp(): Promise<express.Express> {
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
-  // Health check route
   app.get("/", (req: Request, res: Response) => {
     res.status(200).json({
       success: true,
