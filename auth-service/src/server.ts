@@ -1,6 +1,7 @@
 import { createApp } from "./app.js";
+import config from "./config/index.js";
 
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || config.port;
 
 async function main(): Promise<void> {
   try {

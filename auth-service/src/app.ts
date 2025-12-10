@@ -5,6 +5,8 @@ import express, {
 } from "express";
 
 import cors from "cors";
+import notFoundError from "./middlewares/notFoundError.js";
+import globalErrorHandler from "./middlewares/globalErrorHandler.js";
 
 export async function createApp(): Promise<express.Express> {
   const app = express();
@@ -20,6 +22,9 @@ export async function createApp(): Promise<express.Express> {
       message: "Welcome to the auth service!",
     });
   });
+
+  app.use(globalErrorHandler);
+  app.use(notFoundError);
 
   return app;
 }
