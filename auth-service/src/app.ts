@@ -17,14 +17,14 @@ export async function createApp(): Promise<express.Express> {
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
-  app.use("/api/v1", globalRouter);
-
   app.get("/", (req: Request, res: Response) => {
     res.status(200).json({
       success: true,
       message: "Welcome to the auth service!",
     });
   });
+
+  app.use("/api/v1", globalRouter);
 
   app.use(globalErrorHandler);
   app.use(notFoundError);

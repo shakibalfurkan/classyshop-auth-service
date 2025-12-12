@@ -8,9 +8,7 @@ export default {
 
   mongodb_url: process.env.MONGODB_URL,
 
-  redis_host: process.env.REDIS_HOST,
-  redis_port: Number(process.env.REDIS_PORT),
-  redis_password: process.env.REDIS_PASSWORD,
+  redis_database_url: process.env.REDIS_DATABASE_URL,
 
   smtp_host: process.env.SMTP_HOST,
   smtp_port: Number(process.env.SMTP_PORT) || 587,

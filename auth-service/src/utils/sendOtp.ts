@@ -11,7 +11,7 @@ const sendOtp = async (name: string, email: string, template: string) => {
   });
 
   await redis.set(`otp:${email}`, otp, "EX", 5 * 60);
-  await redis.set(`otp_cooldown:${email}`, "blocked", "EX", 2 * 60);
+  await redis.set(`otp_cooldown:${email}`, "true", "EX", 2 * 60);
 };
 
 export default sendOtp;
