@@ -10,11 +10,16 @@ import checkOtpRestrictions from "../../utils/checkOtpRestrictions.js";
 import trackOtpRequests from "../../utils/trackOtpRequests.js";
 import sendOtp from "../../utils/sendOtp.js";
 import verifyOtp from "../../utils/verifyOtp.js";
-import { isPasswordMatched } from "../../utils/passwordManager.js";
-import { createToken } from "../../utils/jwtHelper/index.js";
+import {
+  hashPassword,
+  isPasswordMatched,
+} from "../../utils/passwordManager.js";
+import { createToken, jwtHelper } from "../../utils/jwtHelper/index.js";
 import config from "../../config/index.js";
 import { setCookie } from "../../utils/cookieHandler.js";
 import handleForgotPassword from "../../utils/handleForgotPassword.js";
+import jwt, { type JwtPayload } from "jsonwebtoken";
+import { USER_ROLES } from "../user/user.constant.js";
 
 const registerUserInToDB = async (payload: TRegisterPayload) => {
   const { name, email } = payload;
@@ -72,7 +77,7 @@ const loginUser = async (payload: TLoginPayload, res: Response) => {
 
   const jwtPayload = {
     id: user._id.toString(),
-    role: "user",
+    role: USER_ROLES.USER,
     email: user.email,
   };
 
@@ -89,14 +94,82 @@ const loginUser = async (payload: TLoginPayload, res: Response) => {
   );
 
   setCookie(res, "refreshToken", refreshToken);
+  setCookie(res, "accessToken", accessToken);
 
   const { password, ...userData } = user.toObject();
 
-  return { user: userData, accessToken };
+  return { user: userData };
 };
 
 const forgotUserPassword = async (email: string) => {
-  await handleForgotPassword(email, "user");
+  await handleForgotPassword(email, USER_ROLES.USER);
+
+  return null;
+};
+
+const verifyUserForgotPassword = async (
+  email: string,
+  newPassword: string,
+  otp: string
+) => {
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    throw new AppError(400, "User already exists with this email!");
+  }
+
+  const isSamePassword = await isPasswordMatched(newPassword, user.password!);
+
+  if (isSamePassword) {
+    throw new AppError(400, "Please provide different password");
+  }
+
+  await verifyOtp(email, otp);
+
+  const newHashedPassword = await hashPassword(
+    newPassword,
+    config.bcrypt_salt_round!
+  );
+
+  await User.findOneAndUpdate({ email }, { password: newHashedPassword });
+
+  return null;
+};
+
+const resetUserPassword = async (
+  email: string,
+  newPassword: string,
+  decodedEmail: string
+) => {
+  if (!email || !newPassword) {
+    throw new AppError(400, "Please provide email and new password");
+  }
+
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    throw new AppError(400, "User does not exist!");
+  }
+
+  if (decodedEmail !== user.email) {
+    throw new AppError(401, "You are not authorized!");
+  }
+
+  const isSamePassword = await isPasswordMatched(
+    newPassword,
+    user.password as string
+  );
+
+  if (isSamePassword) {
+    throw new AppError(400, "Please provide different password");
+  }
+
+  const newHashedPassword = await hashPassword(
+    newPassword,
+    config.bcrypt_salt_round!
+  );
+
+  await User.findOneAndUpdate({ email }, { password: newHashedPassword });
 
   return null;
 };
@@ -106,4 +179,6 @@ export const AuthService = {
   verifyUser,
   loginUser,
   forgotUserPassword,
+  verifyUserForgotPassword,
+  resetUserPassword,
 };

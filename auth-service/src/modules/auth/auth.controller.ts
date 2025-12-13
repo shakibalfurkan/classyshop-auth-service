@@ -45,9 +45,47 @@ const forgotUserPassword = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const verifyForgotUserPassword = catchAsync(
+  async (req: Request, res: Response) => {
+    const { email, newPassword, otp } = req.body;
+
+    const result = await AuthService.verifyUserForgotPassword(
+      email,
+      newPassword,
+      otp
+    );
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "OTP sent to the email. Please verify your account.",
+      data: result,
+    });
+  }
+);
+
+const resetUserPassword = catchAsync(async (req: Request, res: Response) => {
+  const { email, newPassword } = req.body;
+  const decodedEmail = req.user?.email;
+  const result = await AuthService.resetUserPassword(
+    email,
+    newPassword,
+    decodedEmail as string
+  );
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "OTP sent to the email. Please verify your account.",
+    data: result,
+  });
+});
+
 export const AuthController = {
   registerUser,
   verifyUser,
   loginUser,
   forgotUserPassword,
+  verifyForgotUserPassword,
+  resetUserPassword,
 };

@@ -89,9 +89,59 @@ const forgotPasswordSchema = z.object({
   }),
 });
 
+const verifyForgotUserPassword = z.object({
+  body: z.object({
+    email: z
+      .email({
+        error: (issue) =>
+          issue.input === undefined
+            ? "Email is required"
+            : "Invalid email address",
+      })
+      .trim(),
+    newPassword: z
+      .string({
+        error: (issue) =>
+          issue.input === undefined
+            ? "New Password is required"
+            : "New Password must be a string",
+      })
+      .trim(),
+  }),
+  otp: z
+    .string({
+      error: (issue) =>
+        issue.input === undefined ? "OPT is required" : "OPT must be a string",
+    })
+    .trim(),
+});
+
+const resetUserPasswordSchema = z.object({
+  body: z.object({
+    email: z
+      .email({
+        error: (issue) =>
+          issue.input === undefined
+            ? "Email is required"
+            : "Invalid email address",
+      })
+      .trim(),
+    newPassword: z
+      .string({
+        error: (issue) =>
+          issue.input === undefined
+            ? "New Password is required"
+            : "New Password must be a string",
+      })
+      .trim(),
+  }),
+});
+
 export const AuthValidation = {
   userRegistrationSchema,
   userVerificationSchema,
   userLoginSchema,
   forgotPasswordSchema,
+  verifyForgotUserPassword,
+  resetUserPasswordSchema,
 };

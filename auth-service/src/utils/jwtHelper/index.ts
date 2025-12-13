@@ -14,6 +14,12 @@ export const createToken = (
   return token;
 };
 
+const verifyToken = (token: string, secret: string) => {
+  const decoded = jwt.verify(token, secret);
+  return decoded;
+};
+
 export const jwtHelper = {
   createToken,
+  verifyToken,
 };
