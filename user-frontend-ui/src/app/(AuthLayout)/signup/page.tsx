@@ -18,6 +18,7 @@ import { useState } from "react";
 import { Controller, set, useForm } from "react-hook-form";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 
 type TFormData = {
   name: string;
@@ -28,6 +29,7 @@ type TFormData = {
 export default function Singup() {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  const router = useRouter();
 
   const {
     handleSubmit,
@@ -47,17 +49,14 @@ export default function Singup() {
     const email = data.email;
     const password = data.password;
 
+    router.push("/verify-otp");
+
     console.log(name, email, password);
   };
 
   return (
-    <section className="max-w-screen-2xl mx-auto p-4">
-      <div>
-        <Link href="/" className="hover:cursor-pointer text-2xl font-semibold">
-          ClassyShop
-        </Link>
-      </div>
-      <div className="flex flex-col items-center justify-center min-h-[90vh] w-full gap-8 ">
+    <section className="max-w-7xl mx-auto p-4">
+      <div className="flex flex-col items-center justify-center min-h-[87vh] w-full gap-8 ">
         <div className="text-center">
           <h1 className="text-3xl font-semibold mt-2.5 mb-4">
             Sign Up your account
@@ -66,7 +65,7 @@ export default function Singup() {
             To use ClassyShop, Please enter your details.
           </p>
         </div>
-        <div className="w-full max-w-md border rounded-lg p-6">
+        <div className="w-full max-w-md border rounded-lg p-6  shadow-sm">
           {serverError && (
             <Alert
               variant="destructive"

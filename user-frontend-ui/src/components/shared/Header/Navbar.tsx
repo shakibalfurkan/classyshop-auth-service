@@ -37,7 +37,7 @@ export default function Navbar() {
         "z-40"
       }
     >
-      <div className="max-w-screen-2xl mx-auto w-full flex items-center justify-between">
+      <div className="max-w-7xl px-3 mx-auto w-full flex items-center justify-between">
         {/* category menu */}
         <div className="lg:min-w-52 mr-5 relative group/category">
           <button className="lg:flex items-center gap-2 cursor-pointer px-5 py-5 w-fit bg-primary text-white">

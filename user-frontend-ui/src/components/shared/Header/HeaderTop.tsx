@@ -16,10 +16,10 @@ export default function HeaderTop() {
 
   return (
     <section
-      className={`bg-white w-full border-b border-gray-200 shadow-sm lg:shadow-none transition-transform lg:transform-none duration-300 z-50 py-1.5`}
+      className={`bg-white w-full border-b border-gray-200 shadow-sm lg:shadow-none z-50 py-1.5`}
     >
       <div className="w-full relative">
-        <div className="max-w-screen-2xl mx-auto px-4 py-2 lg:py-5.5 flex justify-between items-center">
+        <div className="max-w-7xl mx-auto px-3 py-2 lg:py-5.5 flex justify-between items-center">
           {/* menubar for mobile */}
           <div className="lg:hidden">Menu</div>
 

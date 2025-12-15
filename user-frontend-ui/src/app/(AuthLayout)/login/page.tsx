@@ -52,13 +52,8 @@ export default function Login() {
   };
 
   return (
-    <section className="max-w-screen-2xl mx-auto p-4">
-      <div>
-        <Link href="/" className="hover:cursor-pointer text-2xl font-semibold">
-          ClassyShop
-        </Link>
-      </div>
-      <div className="flex flex-col items-center justify-center min-h-[90vh] w-full gap-8 ">
+    <section className="max-w-7xl mx-auto p-4">
+      <div className="flex flex-col items-center justify-center min-h-[87vh] w-full gap-8">
         <div className="text-center">
           <h3 className="text-xl font-medium text-gray-500">
             Welcome back to ClassyShop
@@ -70,7 +65,7 @@ export default function Login() {
             To use ClassyShop, Please enter your details.
           </p>
         </div>
-        <div className="w-full max-w-md border rounded-lg p-6">
+        <div className="w-full max-w-md border rounded-lg p-6 shadow-sm">
           {serverError && (
             <Alert
               variant="destructive"
