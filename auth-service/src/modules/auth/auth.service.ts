@@ -117,9 +117,7 @@ const forgotUserPassword = async (email: string) => {
     config.jwt_reset_token_expires_in as string
   );
 
-  const resetUILink = `${
-    config.user_reset_pass_ui_link
-  }?id=${user._id.toString()}&token=${resetToken}`;
+  const resetUILink = `${config.user_client_url}/token-check?token=${resetToken}`;
 
   sendEmail(user.email, "Forgot Password", "forgot_password", {
     name: user.name,
@@ -129,11 +127,7 @@ const forgotUserPassword = async (email: string) => {
   return null;
 };
 
-const resetUserPassword = async (
-  id: string,
-  newPassword: string,
-  token: string
-) => {
+const resetUserPassword = async (newPassword: string, token: string) => {
   const decodedToken = jwtHelper.verifyToken(
     token,
     config.jwt_reset_token_secret!
@@ -143,7 +137,8 @@ const resetUserPassword = async (
     throw new AppError(401, "You are not authorized!");
   }
 
-  const user = await User.findById(id);
+  const user = await User.findOne({ email: decodedToken.email });
+
   if (!user) {
     throw new AppError(400, "User already exists with this email!");
   }
@@ -205,6 +200,19 @@ const changeUserPassword = async (
   return null;
 };
 
+const tokenCheck = async (token: string) => {
+  const verifyToken = jwtHelper.verifyToken(
+    token,
+    config.jwt_reset_token_secret!
+  ) as JwtPayload;
+
+  if (!verifyToken) {
+    throw new AppError(401, "Session expired!");
+  }
+
+  return null;
+};
+
 export const AuthService = {
   registerUserInToDB,
   verifyUser,
@@ -212,4 +220,5 @@ export const AuthService = {
   forgotUserPassword,
   resetUserPassword,
   changeUserPassword,
+  tokenCheck,
 };

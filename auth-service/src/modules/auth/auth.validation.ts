@@ -91,12 +91,6 @@ const forgotPasswordSchema = z.object({
 
 const resetUserPasswordSchema = z.object({
   body: z.object({
-    id: z
-      .string({
-        error: (issue) =>
-          issue.input === undefined ? "ID is required" : "ID must be a string",
-      })
-      .trim(),
     newPassword: z
       .string({
         error: (issue) =>

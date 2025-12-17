@@ -41,3 +41,10 @@ export const signupSchema = z.object({
     .max(20, { error: "Password must be less than 20 characters" })
     .trim(),
 });
+
+export const forgotSchema = z.object({
+  email: z.email({
+    error: (issue) =>
+      issue.input === undefined ? "Email is required." : "Invalid email.",
+  }),
+});

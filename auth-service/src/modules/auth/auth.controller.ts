@@ -46,9 +46,9 @@ const forgotUserPassword = catchAsync(async (req: Request, res: Response) => {
 });
 
 const resetUserPassword = catchAsync(async (req: Request, res: Response) => {
-  const { id, newPassword, token } = req.body;
+  const { newPassword, token } = req.body;
 
-  const result = await AuthService.resetUserPassword(id, newPassword, token);
+  const result = await AuthService.resetUserPassword(newPassword, token);
 
   sendResponse(res, {
     statusCode: 200,
@@ -76,6 +76,19 @@ const changeUserPassword = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const tokenCheck = catchAsync(async (req: Request, res: Response) => {
+  const { token } = req.query;
+
+  const result = await AuthService.tokenCheck(token as string);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Token verified.",
+    data: result,
+  });
+});
+
 export const AuthController = {
   registerUser,
   verifyUser,
@@ -83,4 +96,5 @@ export const AuthController = {
   forgotUserPassword,
   resetUserPassword,
   changeUserPassword,
+  tokenCheck,
 };

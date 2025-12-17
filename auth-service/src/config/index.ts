@@ -27,5 +27,5 @@ export default {
   jwt_reset_token_secret: process.env.JWT_RESET_TOKEN_SECRET,
   jwt_reset_token_expires_in: process.env.JWT_RESET_TOKEN_EXPIRES_IN,
 
-  user_reset_pass_ui_link: process.env.USER_RESET_PASS_UI_LINK,
+  user_client_url: process.env.USER_CLIENT_URL,
 };
