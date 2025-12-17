@@ -13,7 +13,6 @@ export async function createApp(): Promise<express.Express> {
   app.use(
     cors({
       origin: "http://localhost:3000",
-      allowedHeaders: ["Content-Type", "Authorization"],
       credentials: true,
     })
   );

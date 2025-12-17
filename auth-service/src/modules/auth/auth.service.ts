@@ -16,7 +16,6 @@ import {
 } from "../../utils/passwordManager.js";
 import { createToken } from "../../utils/jwtHelper/index.js";
 import config from "../../config/index.js";
-import { setCookie } from "../../utils/cookieHandler.js";
 import handleForgotPassword from "../../utils/handleForgotPassword.js";
 import { USER_ROLES } from "../../constant/index.js";
 
@@ -77,8 +76,8 @@ const loginUser = async (payload: TLoginPayload, res: Response) => {
 
   const jwtPayload = {
     id: user._id.toString(),
-    role: USER_ROLES.USER,
     email: user.email,
+    role: USER_ROLES.USER,
   };
 
   const accessToken = createToken(
@@ -93,12 +92,9 @@ const loginUser = async (payload: TLoginPayload, res: Response) => {
     config.jwt_refresh_token_expires_in as string
   );
 
-  setCookie(res, "refreshToken", refreshToken);
-  setCookie(res, "accessToken", accessToken);
-
   const { password, ...userData } = user.toObject();
 
-  return { user: userData };
+  return { user: userData, token: { accessToken, refreshToken } };
 };
 
 const forgotUserPassword = async (email: string) => {

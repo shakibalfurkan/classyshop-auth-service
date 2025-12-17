@@ -6,10 +6,12 @@ export const setCookie = (
   tokenName: string,
   tokenValue: string
 ) => {
+  const isProd = config.node_env === "production";
+
   res.cookie(tokenName, tokenValue, {
     httpOnly: true,
-    secure: config.node_env === "production",
-    sameSite: "none",
+    secure: isProd,
+    sameSite: isProd ? "none" : "lax",
     maxAge: 1000 * 60 * 60 * 24 * 7,
     path: "/",
   });

@@ -16,10 +16,12 @@ import { SeparatorWithText } from "@/components/ui/separator";
 import { loginSchema } from "@/schemas/auth.schema";
 import { AlertCircleIcon } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, set, useForm } from "react-hook-form";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useLoginUser } from "@/hooks/auth.hook";
 
 type TFormData = {
   email: string;
@@ -29,6 +31,19 @@ type TFormData = {
 
 export default function Login() {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams?.get("redirect");
+
+  const {
+    mutate: loginUser,
+    data: userData,
+    isSuccess,
+    isPending,
+    isError,
+    error,
+  } = useLoginUser();
 
   const {
     handleSubmit,
@@ -44,11 +59,21 @@ export default function Login() {
   });
 
   const onSubmit = (data: TFormData) => {
-    const email = data.email;
-    const password = data.password;
-    const rememberMe = data.rememberMe;
-    console.log(email, password, rememberMe);
+    loginUser({
+      email: data.email,
+      password: data.password,
+    });
   };
+
+  useEffect(() => {
+    if (!isPending && isSuccess) {
+      if (redirect) {
+        router.push(redirect);
+      } else {
+        router.push("/");
+      }
+    }
+  }, [isPending, isSuccess, redirect, router]);
 
   return (
     <section className="max-w-7xl mx-auto p-4">
@@ -65,7 +90,7 @@ export default function Login() {
           </p>
         </div>
         <div className="w-full max-w-md border rounded-lg p-6 shadow-sm">
-          {/* {isError && (
+          {isError && (
             <Alert
               variant="destructive"
               className="mb-5 border-red-500 bg-red-50"
@@ -76,7 +101,7 @@ export default function Login() {
                 <p>{error?.message}</p>
               </AlertDescription>
             </Alert>
-          )} */}
+          )}
           <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
             <FieldGroup>
               <Controller
@@ -171,8 +196,12 @@ export default function Login() {
               </div>
             </FieldGroup>
 
-            <Button type="submit" className="w-full hover:cursor-pointer">
-              Sign In
+            <Button
+              disabled={isPending}
+              type="submit"
+              className="w-full hover:cursor-pointer"
+            >
+              {isPending ? "Signing in..." : "Sign In"}
             </Button>
           </form>
           <div className="flex items-center justify-center gap-2 mt-3 mb-5">
