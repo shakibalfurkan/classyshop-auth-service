@@ -8,38 +8,31 @@ import { USER_ROLES } from "../../constant/index.js";
 const router = Router();
 
 router.post(
-  "/register-user",
+  "/user/register",
   validateRequest(AuthValidation.userRegistrationSchema),
   AuthController.registerUser
 );
 
 router.post(
-  "/verify-user",
+  "/user/verify",
   validateRequest(AuthValidation.userVerificationSchema),
   AuthController.verifyUser
 );
 
 router.post(
-  "/login-user",
+  "/user/login",
   validateRequest(AuthValidation.userLoginSchema),
   AuthController.loginUser
 );
 
 router.post(
-  "/forgot-user-password",
+  "/user/forgot-password",
   validateRequest(AuthValidation.forgotPasswordSchema),
   AuthController.forgotUserPassword
 );
 
 router.post(
-  "/verify-forgot-user-password",
-  validateRequest(AuthValidation.verifyForgotUserPassword),
-  AuthController.verifyForgotUserPassword
-);
-
-router.post(
-  "/reset-user-password",
-  auth(USER_ROLES.USER),
+  "/user/reset-password",
   validateRequest(AuthValidation.resetUserPasswordSchema),
   AuthController.resetUserPassword
 );

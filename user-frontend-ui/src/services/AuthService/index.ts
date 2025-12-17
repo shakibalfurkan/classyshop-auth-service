@@ -8,7 +8,7 @@ import { FieldValues } from "react-hook-form";
 export const registerUser = async (userData: FieldValues) => {
   try {
     const { data } = await axiosInstance.post(
-      "/api/v1/register-user",
+      "/api/v1/user/register",
       userData
     );
     return data;
@@ -27,7 +27,7 @@ export const registerUser = async (userData: FieldValues) => {
 
 export const verifyUser = async (userData: FieldValues) => {
   try {
-    const { data } = await axiosInstance.post("/api/v1/verify-user", userData);
+    const { data } = await axiosInstance.post("/api/v1/user/verify", userData);
     return data;
   } catch (error: any) {
     if (isAxiosError(error)) {
@@ -46,7 +46,7 @@ export const verifyUser = async (userData: FieldValues) => {
 export const loginUser = async (userData: FieldValues) => {
   const nextCookies = await cookies();
   try {
-    const { data } = await axiosInstance.post("/api/v1/login-user", userData);
+    const { data } = await axiosInstance.post("/api/v1/user/login", userData);
     if (data.success) {
       nextCookies.set("accessToken", data?.data?.token?.accessToken);
       nextCookies.set("refreshToken", data?.data?.token?.refreshToken);
