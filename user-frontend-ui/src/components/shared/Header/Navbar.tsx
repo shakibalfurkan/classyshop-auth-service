@@ -12,9 +12,11 @@ import CSTooltip from "../CSTooltip";
 import { IoMdHeartEmpty } from "react-icons/io";
 import { Badge } from "@/components/ui/badge";
 import { BsCart3 } from "react-icons/bs";
+import { useUser } from "@/context/user.provider";
 
 export default function Navbar() {
   const [isSticky, setIsSticky] = useState(false);
+  const { user } = useUser();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -73,18 +75,47 @@ export default function Navbar() {
           <div>
             {/* menu items */}
             <div className="flex items-center gap-4">
-              {/* authentication link */}
-              <div className="hidden lg:flex items-center gap-2.5">
-                <Link href="/login">
-                  <div className="p-2 border border-gray-300 rounded-full">
-                    <FaRegUser className="size-6 text-gray-700 hover:text-primary transition-colors duration-100" />
+              {user && user.email ? (
+                <>
+                  {/* user profile link */}
+                  <div className="hidden lg:flex items-center gap-2.5">
+                    <Link href="/profile">
+                      <div className="p-2 border border-gray-300 rounded-full">
+                        {user?.avatar ? (
+                          <Image
+                            className="rounded-full"
+                            src={user?.avatar}
+                            alt="avatar"
+                          />
+                        ) : (
+                          <FaRegUser className="size-6 text-gray-700 hover:text-primary transition-colors duration-100" />
+                        )}
+                      </div>
+                    </Link>
+                    <Link href="/profile" className="text-sm font-medium">
+                      <span className="block">Hello, </span>
+                      <span className="block link">
+                        {user.name.split(" ")[0]}
+                      </span>
+                    </Link>
                   </div>
-                </Link>
-                <Link href="/login" className="text-sm font-medium">
-                  <span className="block">Hello, </span>
-                  <span className="block link">Sign in </span>
-                </Link>
-              </div>
+                </>
+              ) : (
+                <>
+                  {/* authentication link */}
+                  <div className="hidden lg:flex items-center gap-2.5">
+                    <Link href="/login">
+                      <div className="p-2 border border-gray-300 rounded-full">
+                        <FaRegUser className="size-6 text-gray-700 hover:text-primary transition-colors duration-100" />
+                      </div>
+                    </Link>
+                    <Link href="/login" className="text-sm font-medium">
+                      <span className="block">Hello, </span>
+                      <span className="block link">Sign in </span>
+                    </Link>
+                  </div>
+                </>
+              )}
 
               {/* divider */}
               <div className="hidden lg:block h-7.5 w-0.5 bg-gray-200"></div>

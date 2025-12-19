@@ -33,7 +33,8 @@ axiosInstance.interceptors.response.use(
   async function (error) {
     const config = error.config;
     const nextCookies = await cookies();
-
+    console.log("Error from axiosInstance:", error?.response?.data?.message);
+    console.log("Error from axiosInstance:", error?.response?.status);
     if (
       error?.response?.status === 401 &&
       error?.response?.data?.message === "jwt expired" &&
