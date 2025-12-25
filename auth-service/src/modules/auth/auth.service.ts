@@ -102,10 +102,17 @@ const loginUser = async (payload: TLoginPayload, res: Response) => {
 
   const { password, ...userData } = user.toObject();
 
-  return { user: userData, token: { accessToken, refreshToken } };
+  setCookie(res, "accessToken", accessToken);
+  setCookie(res, "refreshToken", refreshToken);
+
+  return { user: userData };
 };
 
 const forgotUserPassword = async (email: string) => {
+  if (!email) {
+    throw new AppError(400, "Please provide email");
+  }
+
   const user = await User.findOne({ email });
 
   if (!user) {
@@ -269,7 +276,12 @@ const refreshToken = async (token: string, res: Response) => {
 };
 
 const getMeFromDB = async (email: string, role: string) => {
-  const user = await User.findOne({ email });
+  const user =
+    role === USER_ROLES.USER
+      ? await User.findOne({ email })
+      : role === USER_ROLES.SELLER
+      ? await Seller.findOne({ email })
+      : null;
   if (!user) {
     throw new AppError(400, "User does not exist!");
   }

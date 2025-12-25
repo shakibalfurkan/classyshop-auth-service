@@ -47,6 +47,9 @@ export default function ForgotPassword() {
     formState: { errors },
   } = useForm<TFormData>({
     resolver: zodResolver(forgotSchema),
+    defaultValues: {
+      email: "",
+    },
   });
 
   const onSubmit = (data: TFormData) => {

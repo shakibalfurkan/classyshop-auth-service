@@ -40,7 +40,7 @@ export const baseQueryWithReauth: BaseQueryFn<
     } else {
       // ❌ Refresh failed → logout
       // TODO: handle logout
-      api.dispatch({ type: "auth/logout" });
+      window.location.href = "/login";
     }
   }
 

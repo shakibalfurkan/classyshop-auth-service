@@ -1,6 +1,5 @@
 import { isAxiosError } from "axios";
 import { FieldValues } from "react-hook-form";
-import { jwtDecode } from "jwt-decode";
 import axiosClient from "@/lib/Axios/axios-client";
 
 export const registerUser = async (userData: FieldValues) => {

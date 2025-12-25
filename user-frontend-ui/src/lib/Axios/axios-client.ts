@@ -57,7 +57,7 @@ axiosClient.interceptors.response.use(
       try {
         // Refresh the token
         await axios.post(
-          `${envConfig.baseApi}/auth/refresh-token`,
+          `${envConfig.baseApi}/auth/api/v1/refresh-token`,
           {},
           { withCredentials: true }
         );
@@ -76,8 +76,6 @@ axiosClient.interceptors.response.use(
         // TODO: logout user from frontend state and redirect to login
         // logout user logic here
 
-        // Redirect to login
-        window.location.href = "/login";
         return Promise.reject(refreshError);
       }
     }

@@ -32,7 +32,7 @@ type TFormData = {
 
 export default function Login() {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  const { setIsUserLoading } = useUser();
+  const { refetchUser } = useUser();
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -53,25 +53,30 @@ export default function Login() {
     formState: { errors },
   } = useForm<TFormData>({
     resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+      rememberMe: false,
+    },
   });
 
-  const onSubmit = (data: TFormData) => {
+  const onSubmit = async (data: TFormData) => {
     loginUser({
       email: data.email,
       password: data.password,
     });
-    setIsUserLoading(true);
   };
 
   useEffect(() => {
-    if (!isPending && isSuccess) {
-      if (redirect) {
-        router.push(redirect);
-      } else {
-        router.push("/");
-      }
-    }
-  }, [isSuccess, redirect, router, isPending]);
+    if (!isSuccess) return;
+
+    const run = async () => {
+      await refetchUser();
+      router.push(redirect ?? "/");
+    };
+
+    run();
+  }, [isSuccess, redirect, router, refetchUser]);
 
   return (
     <section className="max-w-7xl mx-auto p-4">

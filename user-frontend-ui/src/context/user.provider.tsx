@@ -1,4 +1,4 @@
-import { getLocalUser, getUserFromDB } from "@/services/AuthService";
+import { getUserFromDB } from "@/services/AuthService";
 import {
   createContext,
   Dispatch,
@@ -15,16 +15,14 @@ export type TUser = {
   password?: string;
   following: string[];
   avatar?: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-  role: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type TUserProviderValues = {
   user: TUser | null;
-  setUser: (user: TUser | null) => void;
   isUserLoading: boolean;
-  setIsUserLoading: Dispatch<SetStateAction<boolean>>;
+  refetchUser: () => Promise<void>;
 };
 
 const UserContext = createContext<TUserProviderValues | null>(null);
@@ -33,23 +31,32 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<TUser | null>(null);
   const [isUserLoading, setIsUserLoading] = useState(true);
 
+  console.log(user);
+
   const handleUser = async () => {
-    const localUser = await getLocalUser();
-    if (localUser?.id && localUser?.email && localUser?.role) {
-      const user = await getUserFromDB();
-      user ? setUser({ ...user.data, role: localUser.role }) : setUser(null);
+    setIsUserLoading(true);
+    try {
+      const response = await getUserFromDB();
+      setUser(response?.data || null);
+    } catch (error) {
+      console.error(error);
+      setUser(null);
+    } finally {
+      setIsUserLoading(false);
     }
-    console.log("userFromDB", user);
-    setIsUserLoading(false);
   };
 
   useEffect(() => {
     handleUser();
-  }, [isUserLoading]);
+  }, []);
 
   return (
     <UserContext.Provider
-      value={{ user, setUser, isUserLoading, setIsUserLoading }}
+      value={{
+        user,
+        isUserLoading,
+        refetchUser: handleUser,
+      }}
     >
       {children}
     </UserContext.Provider>

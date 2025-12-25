@@ -92,9 +92,7 @@ const tokenCheck = catchAsync(async (req: Request, res: Response) => {
 });
 
 const refreshToken = catchAsync(async (req: Request, res: Response) => {
-  const token =
-    req.cookies.refreshToken ??
-    (req.headers.cookies as string)?.split("refreshToken=")[1];
+  const token = req.cookies.refreshToken;
 
   const result = await AuthService.refreshToken(token, res);
 
