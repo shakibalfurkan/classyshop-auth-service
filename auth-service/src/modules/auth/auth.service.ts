@@ -288,6 +288,12 @@ const getMeFromDB = async (email: string, role: string) => {
   return user;
 };
 
+const logout = async (res: Response) => {
+  res.clearCookie("accessToken");
+  res.clearCookie("refreshToken");
+  return null;
+};
+
 // seller routes
 const registerSellerInDB = async (name: string, email: string) => {
   const isSellerExist = await Seller.findOne({ email });
@@ -423,6 +429,7 @@ export const AuthService = {
   tokenCheck,
   refreshToken,
   getMeFromDB,
+  logout,
 
   registerSellerInDB,
   verifySeller,

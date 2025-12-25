@@ -1,6 +1,7 @@
-import { isAxiosError } from "axios";
+import axios, { isAxiosError } from "axios";
 import { FieldValues } from "react-hook-form";
 import axiosClient from "@/lib/Axios/axios-client";
+import envConfig from "@/config/envConfig";
 
 export const registerUser = async (userData: FieldValues) => {
   try {
@@ -65,7 +66,28 @@ export const loginUser = async (userData: FieldValues) => {
   }
 };
 
-export const logout = async () => {};
+export const logout = async () => {
+  try {
+    const { data } = await axios.post(
+      `${envConfig.baseApi}/auth/api/v1/logout`,
+      {},
+      { withCredentials: true }
+    );
+
+    return data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      const message =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        "Failed to logout";
+
+      throw new Error(message);
+    }
+
+    throw new Error("Something went wrong");
+  }
+};
 
 export const forgotUserPassword = async (userData: FieldValues) => {
   try {

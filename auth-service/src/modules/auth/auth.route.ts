@@ -56,6 +56,8 @@ router.get(
   AuthController.getMe
 );
 
+router.post("/logout", AuthController.logout);
+
 // seller routes
 router.post(
   "/seller/register",

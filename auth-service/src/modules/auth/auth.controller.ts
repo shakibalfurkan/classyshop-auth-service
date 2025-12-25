@@ -118,6 +118,17 @@ const getMe = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const logout = catchAsync(async (req: Request, res: Response) => {
+  const result = await AuthService.logout(res);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Logged out successfully.",
+    data: result,
+  });
+});
+
 const registerSeller = catchAsync(async (req: Request, res: Response) => {
   const { name, email } = req.body;
 
@@ -175,6 +186,7 @@ export const AuthController = {
   tokenCheck,
   refreshToken,
   getMe,
+  logout,
 
   registerSeller,
   verifySeller,

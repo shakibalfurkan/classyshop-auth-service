@@ -32,7 +32,7 @@ type TFormData = {
 
 export default function Login() {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  const { refetchUser } = useUser();
+  const { setIsUserLoading } = useUser();
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -71,12 +71,12 @@ export default function Login() {
     if (!isSuccess) return;
 
     const run = async () => {
-      await refetchUser();
+      setIsUserLoading(true);
       router.push(redirect ?? "/");
     };
 
     run();
-  }, [isSuccess, redirect, router, refetchUser]);
+  }, [isSuccess, redirect, router]);
 
   return (
     <section className="max-w-7xl mx-auto p-4">

@@ -22,3 +22,17 @@ export const navItems: TNavItems[] = [
     href: "/become-seller",
   },
 ];
+
+export const AUTH_ROUTES = [
+  "/login",
+  "/signup",
+  "/logout",
+  "/forgot-password",
+  "/reset-password",
+  "/token-check",
+  "/verify-otp",
+  "/refresh-token",
+];
+
+export const isAuthRoute = (url?: string) =>
+  AUTH_ROUTES.some((route) => url?.includes(route));

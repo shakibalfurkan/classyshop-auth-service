@@ -1,4 +1,5 @@
 import envConfig from "@/config/envConfig";
+import { logout } from "@/services/AuthService";
 import axios from "axios";
 
 const axiosClient = axios.create({
@@ -21,31 +22,24 @@ axiosClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    console.log(error.response.data.message);
+
     if (!error.response) {
       return Promise.reject(error);
     }
 
-    // Refresh token endpoint itself failed
-    if (originalRequest.url?.includes("/auth/refresh-token")) {
-      isRefreshing = false;
-      processQueue(error);
-
-      // TODO: logout user from frontend state and redirect to login
-      // logout user logic here
-
-      window.location.href = "/login";
-      return Promise.reject(error);
-    }
-
     // Token expired, attempt refresh
-    if (error.response.status === 401 && !originalRequest._retry) {
+    if (
+      error.response.status === 401 &&
+      error.response.data.message === "jwt expired" &&
+      !originalRequest._retry
+    ) {
       if (isRefreshing) {
         // Queue this request until token is refreshed
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
           .then(() => {
-            originalRequest._retry = true;
             return axiosClient(originalRequest);
           })
           .catch((err) => Promise.reject(err));
@@ -73,8 +67,8 @@ axiosClient.interceptors.response.use(
         processQueue(refreshError);
         isRefreshing = false;
 
-        // TODO: logout user from frontend state and redirect to login
-        // logout user logic here
+        await logout();
+        window.location.href = "/login";
 
         return Promise.reject(refreshError);
       }
