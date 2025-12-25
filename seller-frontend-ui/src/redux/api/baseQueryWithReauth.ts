@@ -6,6 +6,9 @@ import type {
 
 import { fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import envConfig from "@/config/envConfig";
+import { isAuthRoute, isPrivateRoute } from "@/constant";
+import { clearUser } from "../features/auth/authSlice";
+import { authApi } from "../features/auth/authApi";
 
 const baseQuery = fetchBaseQuery({
   baseUrl: envConfig.baseApi,
@@ -33,14 +36,17 @@ export const baseQueryWithReauth: BaseQueryFn<
       api,
       extraOptions
     );
-    console.log(refreshResult);
 
     if (refreshResult.data) {
       result = await baseQuery(args, api, extraOptions);
     } else {
-      // ❌ Refresh failed → logout
-      // TODO: handle logout
-      window.location.href = "/login";
+      const url = typeof window !== "undefined" ? window.location.href : "";
+
+      api.dispatch(clearUser());
+      api.dispatch(authApi.endpoints.logout.initiate(null));
+      if (!isAuthRoute(url) && isPrivateRoute(url)) {
+        window.location.href = "/login";
+      }
     }
   }
 

@@ -51,6 +51,13 @@ export default function Signup() {
     formState: { errors },
   } = useForm<TFormData>({
     resolver: zodResolver(signupSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      phoneNumber: "",
+      country: "",
+      password: "",
+    },
   });
 
   const onSubmit = (data: TFormData) => {

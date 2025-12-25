@@ -20,6 +20,8 @@ import { useLoginMutation } from "@/redux/features/auth/authApi";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/redux/hook";
 import { setSeller } from "@/redux/features/auth/authSlice";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircleIcon } from "lucide-react";
 
 type TFormData = {
   email: string;
@@ -27,12 +29,16 @@ type TFormData = {
   rememberMe?: boolean;
 };
 
+type TErrorResponse = {
+  message: string;
+};
+
 export default function Login() {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
-  const [login, { data: sellerData, isError, isSuccess, isLoading }] =
+  const [login, { data: sellerData, isError, isSuccess, isLoading, error }] =
     useLoginMutation();
 
   const {
@@ -41,6 +47,11 @@ export default function Login() {
     formState: { errors },
   } = useForm<TFormData>({
     resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+      rememberMe: false,
+    },
   });
 
   const onSubmit = (data: TFormData) => {
@@ -52,10 +63,6 @@ export default function Login() {
       dispatch(setSeller(sellerData.data));
       toast.success(sellerData?.message);
       navigate("/create-shop");
-    }
-
-    if (!isLoading && isError && !sellerData?.success) {
-      toast.error(sellerData?.message);
     }
   }, [isError, isLoading, navigate, sellerData, isSuccess, dispatch]);
 
@@ -74,16 +81,22 @@ export default function Login() {
           </p>
         </div>
         <div className="w-full max-w-md border rounded-lg p-6 shadow-sm">
-          {/* <Alert
-            variant="destructive"
-            className="mb-5 border-red-500 bg-red-50"
-          >
-            <AlertCircleIcon />
-            <AlertTitle>Unable to sing in.</AlertTitle>
-            <AlertDescription>
-              <p>Message</p>
-            </AlertDescription>
-          </Alert> */}
+          {isError && (
+            <Alert
+              variant="destructive"
+              className="mb-5 border-red-500 bg-red-50"
+            >
+              <AlertCircleIcon />
+              <AlertTitle>Unable to sing in.</AlertTitle>
+              <AlertDescription>
+                <p>
+                  {error &&
+                    "data" in error &&
+                    (error.data as TErrorResponse)?.message}
+                </p>
+              </AlertDescription>
+            </Alert>
+          )}
 
           <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
             <FieldGroup>

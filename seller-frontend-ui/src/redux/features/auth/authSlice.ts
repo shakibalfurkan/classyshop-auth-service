@@ -31,7 +31,7 @@ const authSlice = createSlice({
       state.seller = seller;
       state.isSellerLoading = false;
     },
-    logout: (state) => {
+    clearUser: (state) => {
       state.seller = null;
       state.isSellerLoading = false;
     },
@@ -41,6 +41,6 @@ const authSlice = createSlice({
   },
 });
 
-export const { setSeller, setIsSellerLoading, logout } = authSlice.actions;
+export const { setSeller, setIsSellerLoading, clearUser } = authSlice.actions;
 
 export default authSlice.reducer;

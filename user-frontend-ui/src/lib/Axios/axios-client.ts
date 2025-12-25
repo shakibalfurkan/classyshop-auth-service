@@ -1,4 +1,5 @@
 import envConfig from "@/config/envConfig";
+import { isAuthRoute, isPrivateRoute } from "@/constant";
 import { logout } from "@/services/AuthService";
 import axios from "axios";
 
@@ -67,8 +68,11 @@ axiosClient.interceptors.response.use(
         processQueue(refreshError);
         isRefreshing = false;
 
+        const url = typeof window !== "undefined" ? window.location.href : "";
         await logout();
-        window.location.href = "/login";
+        if (!isAuthRoute(url) && isPrivateRoute(url)) {
+          window.location.href = "/login";
+        }
 
         return Promise.reject(refreshError);
       }

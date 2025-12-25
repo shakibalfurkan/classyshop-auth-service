@@ -1,28 +1,3 @@
-import { TNavItems } from "@/types";
-
-export const navItems: TNavItems[] = [
-  {
-    name: "Home",
-    href: "/",
-  },
-  {
-    name: "Products",
-    href: "/products",
-  },
-  {
-    name: "Shops",
-    href: "/shops",
-  },
-  {
-    name: "Offers",
-    href: "/offers",
-  },
-  {
-    name: "Become A Seller",
-    href: "/become-seller",
-  },
-];
-
 export const AUTH_ROUTES = [
   "/login",
   "/signup",
@@ -35,6 +10,7 @@ export const isAuthRoute = (url?: string) =>
   AUTH_ROUTES.some((route) => url?.includes(route));
 
 export const PRIVATE_ROUTES = [
+  "create-shop",
   "/profile",
   "/orders",
   "/change-password",
