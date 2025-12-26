@@ -3,12 +3,12 @@ import type { Types } from "mongoose";
 export type TShop = {
   _id: Types.ObjectId;
   name: string;
-  bio?: string;
+  bio: string;
   category: string;
   avatar?: string;
   coverBanner?: string;
   address: string;
-  openingHours?: string;
+  openingHours: string;
   website?: string;
   socialLinks: {
     [key: string]: string;

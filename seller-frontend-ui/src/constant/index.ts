@@ -10,7 +10,7 @@ export const isAuthRoute = (url?: string) =>
   AUTH_ROUTES.some((route) => url?.includes(route));
 
 export const PRIVATE_ROUTES = [
-  "create-shop",
+  "/create-shop",
   "/profile",
   "/orders",
   "/change-password",

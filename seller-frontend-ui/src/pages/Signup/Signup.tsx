@@ -220,7 +220,11 @@ export default function Signup() {
               </div>
             </FieldGroup>
 
-            <Button type="submit" className="w-full hover:cursor-pointer">
+            <Button
+              disabled={isLoading}
+              type="submit"
+              className="w-full hover:cursor-pointer"
+            >
               {isLoading ? "Signing Up..." : "Sign Up"}
             </Button>
           </form>

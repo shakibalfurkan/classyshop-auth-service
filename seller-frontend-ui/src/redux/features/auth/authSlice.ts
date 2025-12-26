@@ -31,16 +31,13 @@ const authSlice = createSlice({
       state.seller = seller;
       state.isSellerLoading = false;
     },
-    clearUser: (state) => {
+    clearSeller: (state) => {
       state.seller = null;
       state.isSellerLoading = false;
-    },
-    setIsSellerLoading: (state, action) => {
-      state.isSellerLoading = action.payload;
     },
   },
 });
 
-export const { setSeller, setIsSellerLoading, clearUser } = authSlice.actions;
+export const { setSeller, clearSeller } = authSlice.actions;
 
 export default authSlice.reducer;

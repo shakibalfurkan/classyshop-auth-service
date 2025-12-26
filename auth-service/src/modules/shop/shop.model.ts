@@ -9,7 +9,7 @@ const shopSchema = new Schema<TShop>(
     },
     bio: {
       type: String,
-      default: null,
+      required: true,
     },
     category: {
       type: String,
@@ -29,7 +29,7 @@ const shopSchema = new Schema<TShop>(
     },
     openingHours: {
       type: String,
-      default: null,
+      required: true,
     },
     website: {
       type: String,

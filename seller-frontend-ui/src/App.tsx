@@ -17,7 +17,7 @@ export default function App() {
   useEffect(() => {
     if (isSellerLoading && !seller) {
       if (sellerData && isSellerSuccess && !sellerLoading) {
-        dispatch(setSeller(sellerData.data));
+        dispatch(setSeller(sellerData.data ?? null));
       }
     }
   }, [
