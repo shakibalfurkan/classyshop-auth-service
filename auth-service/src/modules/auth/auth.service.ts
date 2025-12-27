@@ -22,7 +22,11 @@ import type { JwtPayload } from "jsonwebtoken";
 import { setCookie } from "../../utils/cookieHandler.js";
 import Seller from "../seller/seller.model.js";
 import Shop from "../shop/shop.model.js";
-import type { TSeller } from "../seller/seller.interface.js";
+import { Stripe } from "stripe";
+
+export const stripe = new Stripe(config.stripe_secret_key!, {
+  apiVersion: "2025-12-15.clover",
+});
 
 const registerUserInToDB = async (payload: TRegisterPayload) => {
   const { name, email } = payload;
@@ -88,13 +92,13 @@ const loginUser = async (payload: TLoginPayload, res: Response) => {
     role: USER_ROLES.USER,
   };
 
-  const accessToken = createToken(
+  const userAccessToken = createToken(
     jwtPayload,
     config.jwt_access_token_secret as string,
     config.jwt_access_token_expires_in as string
   );
 
-  const refreshToken = createToken(
+  const userRefreshToken = createToken(
     jwtPayload,
     config.jwt_refresh_token_secret as string,
     config.jwt_refresh_token_expires_in as string
@@ -102,8 +106,8 @@ const loginUser = async (payload: TLoginPayload, res: Response) => {
 
   const { password, ...userData } = user.toObject();
 
-  setCookie(res, "accessToken", accessToken);
-  setCookie(res, "refreshToken", refreshToken);
+  setCookie(res, "userAccessToken", userAccessToken);
+  setCookie(res, "userRefreshToken", userRefreshToken);
 
   return { user: userData };
 };
@@ -270,7 +274,14 @@ const refreshToken = async (token: string, res: Response) => {
     config.jwt_access_token_expires_in as string
   );
 
-  setCookie(res, "accessToken", newAccessToken);
+  const tokenName =
+    decodedToken.role === USER_ROLES.USER
+      ? "userAccessToken"
+      : decodedToken.role === USER_ROLES.SELLER
+      ? "sellerAccessToken"
+      : "adminAccessToken";
+
+  setCookie(res, tokenName, newAccessToken);
 
   return { accessToken: newAccessToken };
 };
@@ -289,8 +300,19 @@ const getMeFromDB = async (email: string, role: string) => {
 };
 
 const logout = async (res: Response) => {
-  res.clearCookie("accessToken");
-  res.clearCookie("refreshToken");
+  const cookiesToClear = [
+    "userAccessToken",
+    "userRefreshToken",
+    "adminAccessToken",
+    "adminRefreshToken",
+    "sellerAccessToken",
+    "sellerRefreshToken",
+  ];
+
+  cookiesToClear.forEach((cookie) => {
+    res.clearCookie(cookie);
+  });
+
   return null;
 };
 
@@ -376,8 +398,8 @@ const loginSeller = async (payload: TLoginPayload, res: Response) => {
     config.jwt_refresh_token_expires_in as string
   );
 
-  setCookie(res, "accessToken", accessToken);
-  setCookie(res, "refreshToken", refreshToken);
+  setCookie(res, "sellerAccessToken", accessToken);
+  setCookie(res, "sellerRefreshToken", refreshToken);
 
   const { password, ...sellerData } = seller.toObject();
 
@@ -418,6 +440,43 @@ const createShopIntoDB = async (payload: {
   return shop;
 };
 
+const createStripeConnectionLink = async (sellerId: string) => {
+  if (!sellerId) {
+    throw new AppError(
+      400,
+      "Seller ID is required to create Stripe connection link"
+    );
+  }
+
+  const seller = await Seller.findById(sellerId);
+
+  if (!seller) {
+    throw new AppError(404, "Seller not found");
+  }
+
+  const account = await stripe.accounts.create({
+    type: "express",
+    country: seller.country || "US",
+    email: seller.email,
+    capabilities: {
+      card_payments: { requested: true },
+      transfers: { requested: true },
+    },
+  });
+
+  seller.stripeAccountId = account.id;
+  await seller.save();
+
+  const accountLink = await stripe.accountLinks.create({
+    account: seller.stripeAccountId,
+    refresh_url: `${process.env.CLIENT_URL}/stripe-refresh`,
+    return_url: `${process.env.CLIENT_URL}/stripe-success`,
+    type: "account_onboarding",
+  });
+
+  return accountLink.url;
+};
+
 export const AuthService = {
   registerUserInToDB,
   verifyUser,
@@ -436,4 +495,5 @@ export const AuthService = {
   loginSeller,
 
   createShopIntoDB,
+  createStripeConnectionLink,
 };

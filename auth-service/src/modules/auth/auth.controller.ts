@@ -92,7 +92,10 @@ const tokenCheck = catchAsync(async (req: Request, res: Response) => {
 });
 
 const refreshToken = catchAsync(async (req: Request, res: Response) => {
-  const token = req.cookies.refreshToken;
+  const token =
+    req.cookies.userRefreshToken ||
+    req.cookies.sellerRefreshToken ||
+    req.cookies.adminRefreshToken;
 
   const result = await AuthService.refreshToken(token, res);
 
@@ -175,6 +178,20 @@ const createShop = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const createStripeConnectionLink = catchAsync(
+  async (req: Request, res: Response) => {
+    const sellerId = req.user?.id;
+    const result = await AuthService.createStripeConnectionLink(sellerId!);
+
+    sendResponse(res, {
+      statusCode: 201,
+      success: true,
+      message: "Stripe connection link created successfully.",
+      data: result,
+    });
+  }
+);
+
 export const AuthController = {
   registerUser,
   verifyUser,
@@ -193,4 +210,5 @@ export const AuthController = {
   loginSeller,
 
   createShop,
+  createStripeConnectionLink,
 };

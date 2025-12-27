@@ -27,5 +27,8 @@ export default {
   jwt_reset_token_secret: process.env.JWT_RESET_TOKEN_SECRET,
   jwt_reset_token_expires_in: process.env.JWT_RESET_TOKEN_EXPIRES_IN,
 
+  stripe_secret_key: process.env.STRIPE_SECRET_KEY,
+
   user_client_url: process.env.USER_CLIENT_URL,
+  seller_client_url: process.env.SELLER_CLIENT_URL,
 };

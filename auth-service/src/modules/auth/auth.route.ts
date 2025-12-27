@@ -84,4 +84,10 @@ router.post(
   AuthController.createShop
 );
 
+router.post(
+  "/seller/create-stripe-connection-link",
+  auth(USER_ROLES.SELLER),
+  AuthController.createStripeConnectionLink
+);
+
 export const AuthRoutes: Router = router;
