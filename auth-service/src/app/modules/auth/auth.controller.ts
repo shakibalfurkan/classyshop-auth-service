@@ -195,6 +195,19 @@ const createStripeConnectionLink = catchAsync(
   }
 );
 
+const getShopBySellerId = catchAsync(async (req: Request, res: Response) => {
+  const sellerId = req.user?.id;
+
+  const result = await AuthService.getShopBySellerId(sellerId!);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Shop retrieved successfully.",
+    data: result,
+  });
+});
+
 export const AuthController = {
   registerUser,
   verifyUser,
@@ -214,4 +227,5 @@ export const AuthController = {
 
   createShop,
   createStripeConnectionLink,
+  getShopBySellerId,
 };

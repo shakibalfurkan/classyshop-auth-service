@@ -90,4 +90,10 @@ router.post(
   AuthController.createStripeConnectionLink
 );
 
+router.get(
+  "/seller/my-shop",
+  auth(USER_ROLES.SELLER),
+  AuthController.getShopBySellerId
+);
+
 export const AuthRoutes: Router = router;

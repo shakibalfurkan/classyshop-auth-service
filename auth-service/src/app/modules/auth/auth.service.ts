@@ -481,6 +481,11 @@ const createStripeConnectionLink = async (sellerId: string) => {
   return { url: accountLink.url };
 };
 
+const getShopBySellerId = async (sellerId: string) => {
+  const shop = await Shop.findOne({ sellerId });
+  return shop;
+};
+
 export const AuthService = {
   registerUserInToDB,
   verifyUser,
@@ -500,4 +505,5 @@ export const AuthService = {
 
   createShopIntoDB,
   createStripeConnectionLink,
+  getShopBySellerId,
 };

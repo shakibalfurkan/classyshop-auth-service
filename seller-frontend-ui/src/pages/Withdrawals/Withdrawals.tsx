@@ -5,7 +5,7 @@ import { FaStripeS } from "react-icons/fa";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 
-export default function Payouts() {
+export default function Withdrawals() {
   const navigate = useNavigate();
   const [
     connectStripeAccount,

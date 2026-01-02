@@ -1,6 +1,31 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-const initialState = {
+export type TShop = {
+  _id: string;
+  name: string;
+  bio: string;
+  category: string;
+  avatar: string;
+  coverBanner: string;
+  address: string;
+  openingHours: string;
+  website: string;
+  socialLinks: {
+    [key: string]: string;
+  };
+  ratings: number;
+  reviews: string[];
+  sellerId: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+type TShopState = {
+  shop: TShop | null;
+  isShopLoading: boolean;
+};
+
+const initialState: TShopState = {
   shop: null,
   isShopLoading: true,
 };

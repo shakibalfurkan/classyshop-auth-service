@@ -1,7 +1,7 @@
 import { useAppSelector } from "@/redux/hook";
 import { Navigate, Outlet, useLocation } from "react-router";
 
-const PrivateRoute = () => {
+const PrivateRoute = ({ children }: { children?: React.ReactNode }) => {
   const { seller, isSellerLoading } = useAppSelector((state) => state.auth);
   const location = useLocation();
 
@@ -22,6 +22,6 @@ const PrivateRoute = () => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  return <Outlet />;
+  return children ? <>{children}</> : <Outlet />;
 };
 export default PrivateRoute;

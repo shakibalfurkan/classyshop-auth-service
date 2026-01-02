@@ -7,13 +7,16 @@ import { Provider } from "react-redux";
 import { store } from "./redux/store";
 import { Toaster } from "./components/ui/sonner";
 import AuthProvider from "./providers/AuthProvider";
+import ShopProvider from "./providers/ShopProvider";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <Provider store={store}>
       <AuthProvider>
-        <Toaster />
-        <RouterProvider router={router} />
+        <ShopProvider>
+          <Toaster />
+          <RouterProvider router={router} />
+        </ShopProvider>
       </AuthProvider>
     </Provider>
   </StrictMode>

@@ -15,8 +15,17 @@ export const shopApi = baseApi.injectEndpoints({
         method: "POST",
       }),
     }),
+    getMyShop: builder.query({
+      query: () => ({
+        url: "/auth/api/v1/seller/my-shop",
+        method: "GET",
+      }),
+    }),
   }),
 });
 
-export const { useCreateShopMutation, useConnectStripeAccountMutation } =
-  shopApi;
+export const {
+  useCreateShopMutation,
+  useConnectStripeAccountMutation,
+  useGetMyShopQuery,
+} = shopApi;
