@@ -290,13 +290,9 @@ const refreshToken = async (token: string, res: Response) => {
   return { accessToken: newAccessToken };
 };
 
-const getMeFromDB = async (email: string, role: string) => {
-  const user =
-    role === USER_ROLES.USER
-      ? await User.findOne({ email })
-      : role === USER_ROLES.SELLER
-      ? await Seller.findOne({ email })
-      : null;
+const getUserFromDB = async (email: string) => {
+  const user = await User.findOne({ email });
+
   if (!user) {
     throw new AppError(400, "User does not exist!");
   }
@@ -374,11 +370,18 @@ const loginSeller = async (payload: TLoginPayload, res: Response) => {
   if (!seller) {
     throw new AppError(400, "Seller does not exist!");
   }
-  console.log(plainPassword, seller.password);
+
   const passwordMatch = await isPasswordMatched(plainPassword, seller.password);
-  console.log(passwordMatch);
+
   if (!passwordMatch) {
     throw new AppError(400, "Invalid credentials!");
+  }
+
+  let shop = null;
+  try {
+    shop = await Shop.findOne({ sellerId: seller._id });
+  } catch (error) {
+    shop = null;
   }
 
   const jwtPayload = {
@@ -404,7 +407,24 @@ const loginSeller = async (payload: TLoginPayload, res: Response) => {
 
   const { password, ...sellerData } = seller.toObject();
 
-  return { seller: sellerData };
+  return { seller: sellerData, shop };
+};
+
+const getSellerFromDB = async (email: string) => {
+  const seller = await Seller.findOne({ email });
+
+  if (!seller) {
+    throw new AppError(400, "Seller does not exist!");
+  }
+
+  let shop = null;
+  try {
+    shop = await Shop.findOne({ sellerId: seller._id });
+  } catch (error) {
+    shop = null;
+  }
+
+  return { seller, shop };
 };
 
 // create shop
@@ -496,12 +516,13 @@ export const AuthService = {
 
   tokenCheck,
   refreshToken,
-  getMeFromDB,
+  getUserFromDB,
   logout,
 
   registerSellerInDB,
   verifySeller,
   loginSeller,
+  getSellerFromDB,
 
   createShopIntoDB,
   createStripeConnectionLink,

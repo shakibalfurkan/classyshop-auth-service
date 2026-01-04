@@ -7,9 +7,8 @@ import type {
 import { fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import envConfig from "@/config/envConfig";
 import { isAuthRoute, isPrivateRoute } from "@/constant";
-import { clearSeller } from "../features/auth/authSlice";
+import { clearAuth } from "../features/auth/authSlice";
 import { authApi } from "../features/auth/authApi";
-import { clearShop } from "../features/shop/shopSlice";
 
 const baseQuery = fetchBaseQuery({
   baseUrl: envConfig.baseApi,
@@ -43,8 +42,7 @@ export const baseQueryWithReauth: BaseQueryFn<
     } else {
       const url = typeof window !== "undefined" ? window.location.href : "";
 
-      api.dispatch(clearSeller());
-      api.dispatch(clearShop());
+      api.dispatch(clearAuth());
       api.dispatch(authApi.endpoints.logout.initiate(null));
       if (!isAuthRoute(url) && isPrivateRoute(url)) {
         window.location.href = "/login";

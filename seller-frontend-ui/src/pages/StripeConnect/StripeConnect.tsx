@@ -5,7 +5,7 @@ import { FaStripeS } from "react-icons/fa";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 
-export default function Withdrawals() {
+export default function StripeConnect() {
   const navigate = useNavigate();
   const [
     connectStripeAccount,
@@ -32,7 +32,7 @@ export default function Withdrawals() {
     <section className="min-h-[80vh] flex items-center justify-center">
       <section className="max-w-sm mx-auto text-center p-8 border rounded-lg shadow-lg">
         <div>
-          <h1 className="text-3xl font-semibold mb-3">Withdraw Methods</h1>
+          <h1 className="text-3xl font-semibold mb-3">Connect with stripe</h1>
           <p className="mb-6">
             This is the Payouts page where sellers can manage their withdraw
             methods.

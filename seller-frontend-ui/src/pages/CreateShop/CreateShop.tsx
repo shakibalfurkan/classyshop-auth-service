@@ -29,7 +29,7 @@ import { shopCategories } from "@/data";
 import type { TShopCategory } from "@/types";
 import { useCreateShopMutation } from "@/redux/features/shop/shopApi";
 import { useAppDispatch } from "@/redux/hook";
-import { setSeller } from "@/redux/features/auth/authSlice";
+import { updateShop } from "@/redux/features/auth/authSlice";
 
 type TFormData = {
   name: string;
@@ -53,7 +53,6 @@ export default function CreateShop() {
   const { handleSubmit, control } = useForm<TFormData>({
     resolver: zodResolver(createShopSchema),
   });
-  console.log(shopData);
 
   const onSubmit = (data: TFormData) => {
     createShop(data);
@@ -61,7 +60,7 @@ export default function CreateShop() {
 
   useEffect(() => {
     if (!isLoading && isSuccess && shopData?.success) {
-      dispatch(setSeller(shopData.data));
+      dispatch(updateShop(shopData.data));
       toast.success(shopData?.message);
       navigate("/payouts");
     }

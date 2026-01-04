@@ -9,37 +9,37 @@ const router = Router();
 
 // user routes
 router.post(
-  "/user/register",
+  "/users/register",
   validateRequest(AuthValidation.userRegistrationSchema),
   AuthController.registerUser
 );
 
 router.post(
-  "/user/verify",
+  "/users/verify",
   validateRequest(AuthValidation.userVerificationSchema),
   AuthController.verifyUser
 );
 
 router.post(
-  "/user/login",
+  "/users/login",
   validateRequest(AuthValidation.loginValidationSchema),
   AuthController.loginUser
 );
 
 router.post(
-  "/user/forgot-password",
+  "/users/forgot-password",
   validateRequest(AuthValidation.forgotPasswordSchema),
   AuthController.forgotUserPassword
 );
 
 router.post(
-  "/user/reset-password",
+  "/users/reset-password",
   validateRequest(AuthValidation.resetUserPasswordSchema),
   AuthController.resetUserPassword
 );
 
 router.patch(
-  "/user/change-password",
+  "/users/change-password",
   auth(USER_ROLES.USER),
   validateRequest(AuthValidation.changeUserPasswordSchema),
   AuthController.resetUserPassword
@@ -50,48 +50,47 @@ router.post("/token-check", AuthController.tokenCheck);
 
 router.post("/refresh-token", AuthController.refreshToken);
 
-router.get(
-  "/me",
-  auth(USER_ROLES.USER, USER_ROLES.SELLER, USER_ROLES.ADMIN),
-  AuthController.getMe
-);
+router.get("/users/me", auth(USER_ROLES.USER), AuthController.getUser);
 
 router.post("/logout", AuthController.logout);
 
 // seller routes
+
 router.post(
-  "/seller/register",
+  "/sellers/register",
   validateRequest(AuthValidation.sellerRegistrationSchema),
   AuthController.registerSeller
 );
 
 router.post(
-  "/seller/login",
+  "/sellers/login",
   validateRequest(AuthValidation.loginValidationSchema),
   AuthController.loginSeller
 );
 
+router.get("/sellers/me", auth(USER_ROLES.SELLER), AuthController.getSeller);
+
 router.post(
-  "/seller/verify",
+  "/sellers/verify",
   validateRequest(AuthValidation.sellerVerificationSchema),
   AuthController.verifySeller
 );
 
 router.post(
-  "/seller/create-shop",
+  "/sellers/create-shop",
   auth(USER_ROLES.SELLER),
   validateRequest(AuthValidation.createShopValidationSchema),
   AuthController.createShop
 );
 
 router.post(
-  "/seller/create-stripe-connection-link",
+  "/sellers/create-stripe-connection-link",
   auth(USER_ROLES.SELLER),
   AuthController.createStripeConnectionLink
 );
 
 router.get(
-  "/seller/my-shop",
+  "/sellers/my-shop",
   auth(USER_ROLES.SELLER),
   AuthController.getShopBySellerId
 );

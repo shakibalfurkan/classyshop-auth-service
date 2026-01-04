@@ -38,6 +38,10 @@ const sellerSchema = new Schema<TSeller>(
       type: String,
       default: null,
     },
+    stripeOnboardingComplete: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

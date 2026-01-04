@@ -3,10 +3,11 @@ export type TSeller = {
   name: string;
   email: string;
   phoneNumber: string;
-  avatar?: string;
+  avatar: string;
   country: string;
   password: string;
-  stripeAccountId?: string;
+  stripeAccountId: string;
+  stripeOnboardingComplete: boolean;
   createdAt: Date;
   updatedAt: Date;
 };

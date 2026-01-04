@@ -2,40 +2,37 @@ import PrivateRoute from "@/middleware/PrivateRoute";
 import { Navigate, type RouteObject } from "react-router";
 import { lazy, Suspense } from "react";
 import DashboardLayout from "@/layouts/DashboardLayout";
+import ShopRoute from "@/middleware/ShopRoute";
 
 const Dashboard = lazy(() => import("@/pages/Dashboard/Dashboard"));
-const Withdrawals = lazy(() => import("@/pages/Withdrawals/Withdrawals"));
 
 export const dashboardRoutes: RouteObject[] = [
   {
     element: <PrivateRoute />,
     children: [
       {
-        element: <DashboardLayout />,
+        element: <ShopRoute />,
         children: [
           {
-            index: true,
-            element: <Navigate to="/dashboard" replace />,
-          },
-
-          {
-            path: "dashboard",
+            element: <DashboardLayout />,
             children: [
               {
                 index: true,
-                element: (
-                  <Suspense fallback={null}>
-                    <Dashboard />
-                  </Suspense>
-                ),
+                element: <Navigate to="/dashboard" replace />,
               },
+
               {
-                path: "withdrawals",
-                element: (
-                  <Suspense fallback={null}>
-                    <Withdrawals />
-                  </Suspense>
-                ),
+                path: "dashboard",
+                children: [
+                  {
+                    index: true,
+                    element: (
+                      <Suspense fallback={null}>
+                        <Dashboard />
+                      </Suspense>
+                    ),
+                  },
+                ],
               },
             ],
           },

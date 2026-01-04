@@ -1,4 +1,4 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 export type TSeller = {
   _id: string;
@@ -8,37 +8,73 @@ export type TSeller = {
   avatar: string;
   country: string;
   password: string;
-  stripeId?: string;
+  stripeAccountId: string;
+  stripeOnboardingComplete: boolean;
   createdAt: Date;
   updatedAt: Date;
 };
 
+export type TShop = {
+  _id: string;
+  name: string;
+  bio: string;
+  category: string;
+  avatar: string;
+  coverBanner: string;
+  address: string;
+  openingHours: string;
+  website: string;
+  socialLinks: {
+    [key: string]: string;
+  };
+  ratings: number;
+  reviews: string;
+  sellerId: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export interface LoginResponse {
+  seller: TSeller;
+  shop: TShop | null;
+}
+
 type TAuthState = {
   seller: TSeller | null;
-  isSellerLoading: boolean;
+  shop: TShop | null;
+  isAuthenticated: boolean;
+  isInitialized: boolean;
 };
 
 const initialState: TAuthState = {
   seller: null,
-  isSellerLoading: true,
+  shop: null,
+  isAuthenticated: false,
+  isInitialized: false,
 };
 
 const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    setSeller: (state, action) => {
-      const seller = action.payload;
-      state.seller = seller;
-      state.isSellerLoading = false;
+    setAuthData: (state, action: PayloadAction<LoginResponse>) => {
+      state.seller = action.payload.seller;
+      state.shop = action.payload.shop;
+      state.isAuthenticated = true;
+      state.isInitialized = true;
     },
-    clearSeller: (state) => {
+    clearAuth: (state) => {
       state.seller = null;
-      state.isSellerLoading = false;
+      state.shop = null;
+      state.isAuthenticated = false;
+      state.isInitialized = true;
+    },
+    updateShop: (state, action: PayloadAction<TShop>) => {
+      state.shop = action.payload;
     },
   },
 });
 
-export const { setSeller, clearSeller } = authSlice.actions;
+export const { setAuthData, clearAuth, updateShop } = authSlice.actions;
 
 export default authSlice.reducer;

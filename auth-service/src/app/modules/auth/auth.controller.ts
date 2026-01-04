@@ -107,11 +107,10 @@ const refreshToken = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const getMe = catchAsync(async (req: Request, res: Response) => {
+const getUser = catchAsync(async (req: Request, res: Response) => {
   const email = req.user?.email;
-  const role = req.user?.role;
 
-  const result = await AuthService.getMeFromDB(email!, role!);
+  const result = await AuthService.getUserFromDB(email!);
 
   sendResponse(res, {
     statusCode: 200,
@@ -167,6 +166,19 @@ const loginSeller = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getSeller = catchAsync(async (req: Request, res: Response) => {
+  const email = req.user?.email;
+
+  const result = await AuthService.getSellerFromDB(email!);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Seller retrieved successfully.",
+    data: result,
+  });
+});
+
 const createShop = catchAsync(async (req: Request, res: Response) => {
   const sellerId = req.user?.id;
 
@@ -218,12 +230,13 @@ export const AuthController = {
 
   tokenCheck,
   refreshToken,
-  getMe,
+  getUser,
   logout,
 
   registerSeller,
   verifySeller,
   loginSeller,
+  getSeller,
 
   createShop,
   createStripeConnectionLink,

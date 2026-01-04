@@ -5,7 +5,7 @@ import { useAppSelector } from "@/redux/hook";
 import { Separator } from "../ui/separator";
 
 export default function SidebarHeader() {
-  const { shop } = useAppSelector((state) => state.shop);
+  const { shop } = useAppSelector((state) => state.auth);
   return (
     <section>
       <Link to="/">

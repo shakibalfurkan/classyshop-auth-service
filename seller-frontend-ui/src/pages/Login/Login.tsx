@@ -3,8 +3,6 @@ import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema } from "@/schemas/auth.schema";
-// import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-// import { AlertCircleIcon } from "lucide-react";
 import {
   Field,
   FieldError,
@@ -18,8 +16,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Link, useNavigate } from "react-router";
 import { useLoginMutation } from "@/redux/features/auth/authApi";
 import { toast } from "sonner";
-import { useAppDispatch, useAppSelector } from "@/redux/hook";
-import { setSeller } from "@/redux/features/auth/authSlice";
+import { useAppDispatch } from "@/redux/hook";
+import { setAuthData } from "@/redux/features/auth/authSlice";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircleIcon } from "lucide-react";
 
@@ -37,9 +35,8 @@ export default function Login() {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { isSellerLoading } = useAppSelector((state) => state.auth);
 
-  const [login, { data: sellerData, isError, isSuccess, isLoading, error }] =
+  const [login, { data, isError, isSuccess, isLoading, error }] =
     useLoginMutation();
 
   const {
@@ -59,25 +56,33 @@ export default function Login() {
     login({ email: data.email, password: data.password });
   };
 
-  console.log(error);
+  console.log(data);
 
   useEffect(() => {
-    if (!isLoading && isSuccess && sellerData?.success) {
-      dispatch(setSeller(sellerData.data));
-      toast.success(sellerData?.message);
-      if (!isSellerLoading) {
-        navigate("/create-shop");
+    if (isSuccess && data?.success) {
+      dispatch(setAuthData(data.data));
+      const { shop, seller } = data.data;
+
+      toast.success(data.message || "Login successful!");
+
+      if (!shop) {
+        navigate("/create-shop", { replace: true });
+      } else if (!seller.stripeAccountId || !seller.stripeOnboardingComplete) {
+        navigate("/stripe-connect", { replace: true });
+      } else {
+        navigate("/dashboard", { replace: true });
       }
     }
-  }, [
-    isError,
-    isLoading,
-    navigate,
-    sellerData,
-    isSuccess,
-    dispatch,
-    isSellerLoading,
-  ]);
+  }, [isSuccess, data, dispatch, navigate]);
+
+  useEffect(() => {
+    if (isError && error) {
+      const errorMessage =
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (error as any)?.data?.message || "Login failed. Please try again.";
+      toast.error(errorMessage);
+    }
+  }, [isError, error]);
 
   return (
     <section className="max-w-7xl mx-auto p-4">
