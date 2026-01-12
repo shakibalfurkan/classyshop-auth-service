@@ -30,7 +30,9 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { createProductSchema } from "@/schemas/product.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import ColorSelector from "@/components/ColorSelector/ColorSelector";
+import ColorSelector from "@/components/Form/ColorSelector/ColorSelector";
+import { Link } from "react-router";
+import CustomSpecifications from "@/components/Form/CustomSpecifications/CustomSpecifications";
 
 export type TProductFormData = {
   title: string;
@@ -41,7 +43,7 @@ export type TProductFormData = {
   colors?: string[];
 };
 
-const MAX_IMAGES = 8;
+const MAX_IMAGES = 10;
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ACCEPTED_IMAGE_TYPES = [
   "image/jpeg",
@@ -135,11 +137,7 @@ export default function CreateProduct() {
     setImageFiles((prev) => prev.filter((img) => img.id !== id));
   };
 
-  const {
-    handleSubmit,
-    control,
-    formState: { errors },
-  } = useForm<TProductFormData>({
+  const { handleSubmit, control } = useForm<TProductFormData>({
     resolver: zodResolver(createProductSchema),
     defaultValues: {
       title: "",
@@ -175,7 +173,9 @@ export default function CreateProduct() {
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
-              <BreadcrumbLink to={"/dashboard"}>Dashboard</BreadcrumbLink>
+              <BreadcrumbLink asChild>
+                <Link to={"/dashboard"}>Dashboard</Link>
+              </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
@@ -186,11 +186,11 @@ export default function CreateProduct() {
       </section>
       {/* main create form */}
       <form
-        className="flex flex-col md:flex-row gap-6"
+        className="flex flex-col lg:flex-row gap-6"
         onSubmit={handleSubmit(onSubmit)}
       >
         {/* image upload section */}
-        <div className="md:w-[40%] lg:w-[35%] mt-6">
+        <div className="lg:w-[35%] mt-6">
           <label className="block text-sm font-medium text-foreground mb-3">
             Product Images
             <span className="text-muted-foreground ml-2">
@@ -257,7 +257,7 @@ export default function CreateProduct() {
 
           {imageFiles.length > 0 && (
             <div className="mt-5">
-              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-3 gap-3">
                 {imageFiles.map((imageData, index) => (
                   <div
                     key={imageData.id}
@@ -276,7 +276,7 @@ export default function CreateProduct() {
                     <button
                       type="button"
                       onClick={() => removeImage(imageData.id)}
-                      className="absolute top-2 right-2 bg-destructive hover:bg-destructive/90 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-lg"
+                      className="absolute top-2 right-2 bg-destructive hover:bg-destructive/90 text-white rounded-full p-1.5 lg:opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-lg"
                       aria-label={`Remove image ${index + 1}`}
                     >
                       <IoCloseCircle className="w-4 h-4" />
@@ -408,6 +408,9 @@ export default function CreateProduct() {
             />
             {/* Color Selector */}
             <ColorSelector control={control} />
+
+            {/* Custom Specifications */}
+            <CustomSpecifications control={control} />
 
             <Button>Create</Button>
           </FieldGroup>

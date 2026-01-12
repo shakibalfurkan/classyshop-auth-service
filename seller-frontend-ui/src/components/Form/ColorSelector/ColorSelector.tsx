@@ -1,9 +1,9 @@
 import { Controller, type Control } from "react-hook-form";
-import { Field, FieldLabel } from "../ui/field";
+import { Field, FieldLabel } from "../../ui/field";
 import { useState } from "react";
 import { Check, Plus } from "lucide-react";
 import type { TProductFormData } from "@/pages/CreateProduct/CreateProduct";
-import { Button } from "../ui/button";
+import { Button } from "../../ui/button";
 
 const PRESET_COLORS = [
   "#000000",
@@ -44,6 +44,10 @@ export default function ColorSelector({
     return yiq >= 128 ? "#000000" : "#FFFFFF";
   };
 
+  const isValidHex = (hex: string): boolean => {
+    return /^#[0-9A-Fa-f]{6}$/.test(hex);
+  };
+
   return (
     <div className="w-full flex items-center justify-center">
       {/* Color Selector */}
@@ -62,7 +66,7 @@ export default function ColorSelector({
           };
 
           const handleAddCustom = () => {
-            if (!colors.includes(customColor)) {
+            if (isValidHex(customColor) && !colors.includes(customColor)) {
               field.onChange([...colors, customColor]);
             }
           };
@@ -76,7 +80,7 @@ export default function ColorSelector({
                 <Field className="mb-3">
                   <FieldLabel htmlFor="colors">Colors</FieldLabel>
                 </Field>
-                <div className="flex flex-wrap gap-3.5">
+                <div className="flex flex-wrap gap-3">
                   {PRESET_COLORS.map((hex) => {
                     const isSelected = colors.includes(hex);
 
@@ -142,8 +146,7 @@ export default function ColorSelector({
                           onClick={() =>
                             document.getElementById("colorPicker")?.click()
                           }
-                          className="size-8 rounded-lg border-2 border-gray-600 hover:border-primary transition-all shrink-0
-                           shadow-inner cursor-pointer"
+                          className="size-8 rounded-lg border-2 border-gray-600 hover:border-primary transition-all shrink-0 shadow-inner cursor-pointer"
                           style={{ backgroundColor: customColor }}
                           title="Pick a color"
                         />
@@ -167,6 +170,13 @@ export default function ColorSelector({
                               setCustomColor(val);
                             }
                           }}
+                          onBlur={(e) => {
+                            const val = e.target.value;
+                            if (!isValidHex(val)) {
+                              setCustomColor("#3B82F6");
+                            }
+                          }}
+                          maxLength={7}
                           className="w-full bg-transparent text-white font-mono text-sm focus:outline-none"
                           placeholder="#000000"
                         />
@@ -176,13 +186,20 @@ export default function ColorSelector({
                       size="lg"
                       type="button"
                       onClick={handleAddCustom}
-                      disabled={colors.includes(customColor)}
+                      disabled={
+                        !isValidHex(customColor) || colors.includes(customColor)
+                      }
                       className="p-4 disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed"
                     >
                       <Plus size={18} />
                       Add
                     </Button>
                   </div>
+                  {!isValidHex(customColor) && customColor.length > 0 && (
+                    <p className="text-xs text-red-400 mt-1">
+                      Please enter a valid 6-character hex color (e.g., #FF5733)
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -192,7 +209,7 @@ export default function ColorSelector({
                   <label className="block text-sm font-semibold text-gray-300 mb-3">
                     Added Custom Colors
                   </label>
-                  <div className="flex flex-wrap gap-3.5">
+                  <div className="flex flex-wrap gap-3">
                     {customColors.map((hex) => {
                       const isSelected = colors.includes(hex);
                       return (
