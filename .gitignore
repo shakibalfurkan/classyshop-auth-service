@@ -54,3 +54,6 @@ lerna-debug.log*
 *.njsproj
 *.sln
 *.sw?
+/src/generated/prisma
+
+/generated/prisma
