@@ -21,10 +21,6 @@ logs
 # testing
 /coverage
 
-# next.js
-.next/
-out
-
 # production
 /build
 
@@ -48,7 +44,6 @@ lerna-debug.log*
 
 # typescript
 *.tsbuildinfo
-next-env.d.ts
 
 
 # Editor directories and files
