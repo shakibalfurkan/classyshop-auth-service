@@ -1,4 +1,8 @@
-import express, { type Request, type Response } from "express";
+import express, {
+  type Application,
+  type Request,
+  type Response,
+} from "express";
 
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -6,25 +10,41 @@ import cookieParser from "cookie-parser";
 import config from "./config/index";
 import globalErrorHandler from "./common/middlewares/error.middleware";
 import notFoundHandler from "./common/middlewares/notFound.middleware";
+import helmet from "helmet";
+import morgan from "morgan";
+import { morganStream } from "./lib/logger";
+import { authRoutes } from "./modules/auth/auth.route";
 
-export async function createApp(): Promise<express.Express> {
-  const app = express();
+export async function createApp(): Promise<Application> {
+  const app: Application = express();
 
   // Middleware setup
+  app.use(helmet());
   app.use(
     cors({
       origin: config.allowed_origins?.split(","),
       credentials: true,
     }),
   );
-  app.use(express.json());
-  app.use(express.urlencoded({ extended: true }));
+  app.use(express.json({ limit: "10mb" }));
+  app.use(express.urlencoded({ extended: true, limit: "10mb" }));
   app.use(cookieParser());
+
+  if (config.isDevelopment) {
+    app.use(morgan("dev", { stream: morganStream }));
+  } else {
+    app.use(morgan("combined", { stream: morganStream }));
+  }
+
+  app.use((req, _res, next) => {
+    req.id = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+    next();
+  });
 
   app.get("/", (_req: Request, res: Response) => {
     res.status(200).json({
       success: true,
-      message: "Welcome to the classyshop auth service!",
+      message: `Welcome to the ClassyShop ${config.serviceName} API!`,
     });
   });
 
@@ -35,11 +55,10 @@ export async function createApp(): Promise<express.Express> {
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
       service: config.serviceName,
-      version: config.apiVersion,
     });
   });
 
-  app.use("/api/v1", globalRouter);
+  app.use("/api/v1", authRoutes);
 
   app.use(notFoundHandler);
 

@@ -282,14 +282,14 @@ const globalErrorHandler: ErrorRequestHandler = (
     method: req.method,
     path: req.path,
     ip: req.ip,
-    userId: req.user?.id,
-    requestId: (req as any).id,
+    requestId: req.id,
   };
 
   if (statusCode >= 500) {
     logger.error({
       message: `${message} - ${err?.message}`,
       error: err,
+      stack: err.stack,
       ...logMetadata,
     });
   } else if (statusCode >= 400) {
