@@ -1,7 +1,7 @@
 import path from "path";
 import winston from "winston";
 import DailyRotateFile from "winston-daily-rotate-file";
-import config from "../config";
+import config from "../config/index.js";
 
 const consoleFormat = winston.format.combine(
   winston.format.colorize(),
@@ -46,6 +46,18 @@ if (!isServerless) {
       format: fileFormat,
     }),
   );
+
+  // transports.push(
+  //   new DailyRotateFile({
+  //     filename: path.join(process.cwd(), "logs", "http", "http-%DATE%.log"),
+  //     datePattern: "YYYY-MM-DD",
+  //     level: "http",
+  //     zippedArchive: true,
+  //     maxSize: "50m",
+  //     maxFiles: "7d",
+  //     format: fileFormat,
+  //   }),
+  // );
 
   // Error logs (warn, error)
   transports.push(

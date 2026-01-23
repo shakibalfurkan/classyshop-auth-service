@@ -1,6 +1,6 @@
 // src/common/middlewares/notFound.middleware.ts
 import type { Request, Response, NextFunction } from "express";
-import { NotFoundError } from "../errors/AppError";
+import { NotFoundError } from "../errors/AppError.js";
 
 export const notFoundHandler = (
   req: Request,

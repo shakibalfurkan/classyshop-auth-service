@@ -14,19 +14,23 @@ datasource db {
 }
 
 model Credential {
-  id         String    @id @default(uuid())
-  email      String    @unique
-  password   String
-  role       Role      @default(CUSTOMER)
-  isVerified Boolean   @default(false)
-  lastLogin  DateTime?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  id                  String    @id @default(uuid())
+  email               String    @unique
+  password            String
+  role                Role      @default(CUSTOMER)
+  isVerified          Boolean   @default(false)
+  isActive            Boolean   @default(true)
+  lastLogin           DateTime?
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
   refreshTokens  RefreshToken[]
   passwordResets PasswordReset[]
 
   @@index([email])
+  @@index([role])
   @@map("credentials")
 }
 

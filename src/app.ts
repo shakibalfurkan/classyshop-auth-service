@@ -7,13 +7,13 @@ import express, {
 import cors from "cors";
 import cookieParser from "cookie-parser";
 
-import config from "./config/index";
-import globalErrorHandler from "./common/middlewares/error.middleware";
-import notFoundHandler from "./common/middlewares/notFound.middleware";
+import config from "./config/index.js";
+import globalErrorHandler from "./common/middlewares/error.middleware.js";
+import notFoundHandler from "./common/middlewares/notFound.middleware.js";
 import helmet from "helmet";
 import morgan from "morgan";
-import { morganStream } from "./lib/logger";
-import { authRoutes } from "./modules/auth/auth.route";
+import { morganStream } from "./lib/logger.js";
+import { authRoutes } from "./modules/auth/auth.route.js";
 
 export async function createApp(): Promise<Application> {
   const app: Application = express();

@@ -1,12 +1,12 @@
 import type { ErrorRequestHandler } from "express";
 import { ZodError } from "zod";
 
-import type { TErrorResponse, TErrorSource } from "../types/error.types";
-import { logger } from "../../lib/logger";
-import config from "../../config";
-import { Prisma } from "../../generated/prisma/client";
-import handleZodError from "../errors/handleZodError";
-import { AppError } from "../errors/AppError";
+import type { TErrorResponse, TErrorSource } from "../types/error.types.js";
+import { logger } from "../../lib/logger.js";
+import config from "../../config/index.js";
+import { Prisma } from "../../generated/prisma/client.js";
+import handleZodError from "../errors/handleZodError.js";
+import { AppError } from "../errors/AppError.js";
 
 const globalErrorHandler: ErrorRequestHandler = (
   err,

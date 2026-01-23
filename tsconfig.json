@@ -7,8 +7,7 @@
 
     // Environment Settings
     // See also https://aka.ms/tsconfig/module
-    "module": "esnext",
-    "moduleResolution": "node",
+    "module": "nodenext",
     "target": "esnext",
     // For nodejs:
     "lib": ["esnext"],
@@ -32,9 +31,12 @@
     // "noFallthroughCasesInSwitch": true,
     // "noPropertyAccessFromIndexSignature": true,
 
+    /* Interop & Security */
+    "esModuleInterop": true, // Essential for Express/Winston
+    "forceConsistentCasingInFileNames": true, // Prevents Linux/Windows bugs
+
     // Recommended Options
     "strict": true,
-    "esModuleInterop": true,
     "jsx": "react-jsx",
     "verbatimModuleSyntax": true,
     "isolatedModules": true,
@@ -43,6 +45,6 @@
     "skipLibCheck": true
   },
 
-  "include": ["src/**/*", "../../generated"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
 }
