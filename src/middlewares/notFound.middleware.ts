@@ -1,4 +1,3 @@
-// src/common/middlewares/notFound.middleware.ts
 import type { Request, Response, NextFunction } from "express";
 import { NotFoundError } from "../errors/AppError.js";
 

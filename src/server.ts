@@ -11,7 +11,9 @@ async function main(): Promise<void> {
 
     // Start server
     app.listen(port, () => {
-      logger.info(`ClassyShop Auth service is listening on port: ${port}`);
+      logger.info(
+        `ClassyShop ${config.serviceName} is listening on port: ${port}`,
+      );
     });
   } catch (err) {
     logger.error("Failed to start server:", err);

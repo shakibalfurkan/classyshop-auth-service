@@ -23,14 +23,6 @@ export default {
 
   security: {
     bcrypt_salt_round: process.env.BCRYPT_SALT_ROUND,
-    rateLimitWindowMs: parseInt(
-      process.env.RATE_LIMIT_WINDOW_MS || "900000",
-      10,
-    ),
-    rateLimitMaxRequests: parseInt(
-      process.env.RATE_LIMIT_MAX_REQUESTS || "100",
-      10,
-    ),
   },
 
   user_service_url: process.env.USER_SERVICE_URL,
@@ -43,12 +35,6 @@ export default {
   smtp_pass: process.env.SMTP_PASS,
 
   allowed_origins: process.env.ALLOWED_ORIGINS,
-
-  logging: {
-    level: process.env.LOG_LEVEL || "info",
-    enableConsole: process.env.ENABLE_CONSOLE_LOGS !== "false",
-    enableFile: process.env.ENABLE_FILE_LOGS === "true",
-  },
 
   user_client_url: process.env.USER_CLIENT_URL,
   seller_client_url: process.env.SELLER_CLIENT_URL,

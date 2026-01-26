@@ -8,12 +8,13 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 
 import config from "./config/index.js";
-import globalErrorHandler from "./common/middlewares/error.middleware.js";
-import notFoundHandler from "./common/middlewares/notFound.middleware.js";
+import globalErrorHandler from "./middlewares/error.middleware.js";
+import notFoundHandler from "./middlewares/notFound.middleware.js";
 import helmet from "helmet";
 import morgan from "morgan";
 import { morganStream } from "./lib/logger.js";
-import { authRoutes } from "./modules/auth/auth.route.js";
+import { AuthRoutes } from "./modules/auth/auth.route.js";
+import formatUptime from "./utils/formatUptime.js";
 
 export async function createApp(): Promise<Application> {
   const app: Application = express();
@@ -53,12 +54,12 @@ export async function createApp(): Promise<Application> {
       success: true,
       message: "Service is healthy",
       timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
+      uptime: formatUptime(process.uptime()),
       service: config.serviceName,
     });
   });
 
-  app.use("/api/v1", authRoutes);
+  app.use("/api/v1", AuthRoutes);
 
   app.use(notFoundHandler);
 
