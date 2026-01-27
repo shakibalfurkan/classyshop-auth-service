@@ -21,22 +21,3 @@ export interface TErrorResponse {
   requestId?: string;
   timestamp?: string;
 }
-
-export enum ErrorSeverity {
-  LOW = "low",
-  MEDIUM = "medium",
-  HIGH = "high",
-  CRITICAL = "critical",
-}
-
-export enum ErrorCategory {
-  DATABASE = "database",
-  VALIDATION = "validation",
-  AUTHENTICATION = "authentication",
-  AUTHORIZATION = "authorization",
-  CACHE = "cache",
-  EXTERNAL_API = "external_api",
-  FILE_SYSTEM = "file_system",
-  BUSINESS_LOGIC = "business_logic",
-  UNKNOWN = "unknown",
-}

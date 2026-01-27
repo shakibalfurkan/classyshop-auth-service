@@ -22,7 +22,6 @@ model Credential {
 
   isDeleted        Boolean       @default(false)
   deletedAt        DateTime?
-  deletionReason   String?
   canReactivate    Boolean       @default(true)
   deletionType     DeletionType?
   reactivateWithin DateTime?
