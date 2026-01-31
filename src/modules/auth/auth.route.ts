@@ -10,5 +10,10 @@ router.post(
   validateRequest(AuthValidation.registerRequestValidationSchema),
   AuthController.registerRequest,
 );
+router.post(
+  "/verify-registration",
+  validateRequest(AuthValidation.registerRequestValidationSchema),
+  AuthController.registerRequest,
+);
 
 export const AuthRoutes = router;

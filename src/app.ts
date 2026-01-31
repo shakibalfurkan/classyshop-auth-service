@@ -8,8 +8,8 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 
 import config from "./config/index.js";
-import globalErrorHandler from "./middlewares/error.middleware.js";
-import notFoundHandler from "./middlewares/notFound.middleware.js";
+import globalErrorHandler from "./middlewares/globalErrorHandler.js";
+import notFoundHandler from "./middlewares/notFound.js";
 import helmet from "helmet";
 import morgan from "morgan";
 import { morganStream } from "./lib/logger.js";
