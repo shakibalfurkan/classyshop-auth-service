@@ -21,9 +21,7 @@ export default {
     reset_token_expires_in: process.env.JWT_RESET_TOKEN_EXPIRES_IN,
   },
 
-  security: {
-    bcrypt_salt_round: process.env.BCRYPT_SALT_ROUND,
-  },
+  bcrypt_salt_round: process.env.BCRYPT_SALT_ROUND,
 
   user_service_url: process.env.USER_SERVICE_URL,
   internal_service_secret: process.env.INTERNAL_SERVICE_SECRET,

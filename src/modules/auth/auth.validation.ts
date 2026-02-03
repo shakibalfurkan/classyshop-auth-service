@@ -1,5 +1,5 @@
 import z from "zod";
-const shopAddressValidationSchema = z.object({
+export const shopAddressValidationSchema = z.object({
   street: z.string().min(1, "Street is required"),
   city: z.string().min(1, "City is required"),
   state: z.string().min(1, "State is required"),
