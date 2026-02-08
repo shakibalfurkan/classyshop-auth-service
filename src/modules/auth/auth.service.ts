@@ -5,6 +5,11 @@ import { prisma } from "../../lib/prisma.js";
 import type { TRegisterRequest } from "../../types/auth.types.js";
 import { hashPassword } from "../../utils/passwordHandler.js";
 import { redis } from "../../config/redis.js";
+import { EventBus } from "../../events/event-bus.js";
+import {
+  KafkaTopics,
+  NotificationEventTypes,
+} from "../../events/event-types.js";
 
 const registerRequest = async (payload: TRegisterRequest) => {
   const { email, password, role, firstName, lastName, ...profileData } =
@@ -38,6 +43,17 @@ const registerRequest = async (payload: TRegisterRequest) => {
   };
 
   await redis.setex(`reg:${email}`, 35 * 60, JSON.stringify(registrationData));
+
+  await EventBus.publish(KafkaTopics.NOTIFICATIONS, {
+    eventType: NotificationEventTypes.AUTH_OTP,
+    reason: "email_verification",
+    source: config.serviceName,
+    payload: {
+      firstName,
+      email,
+      otp,
+    },
+  });
 };
 
 // const verifyRegistration = async (req, res) => {

@@ -12,6 +12,12 @@ export default {
 
   redis_database_url: process.env.REDIS_DATABASE_URL,
 
+  kafka: {
+    broker: process.env.KAFKA_BROKER,
+    username: process.env.KAFKA_USERNAME,
+    password: process.env.KAFKA_PASSWORD,
+  },
+
   jwt: {
     access_token_secret: process.env.JWT_ACCESS_TOKEN_SECRET,
     access_token_expires_in: process.env.JWT_ACCESS_TOKEN_EXPIRES_IN,
