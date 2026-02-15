@@ -7,7 +7,7 @@ export enum KafkaTopics {
 }
 
 export enum NotificationEventTypes {
-  AUTH_WELCOME = "registered",
+  AUTH_REGISTERED = "registered",
   AUTH_OTP = "otp.requested",
   AUTH_PASSWORD_RESET = "password.reset",
 

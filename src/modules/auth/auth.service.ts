@@ -10,10 +10,11 @@ import {
   KafkaTopics,
   NotificationEventTypes,
 } from "../../events/event-types.js";
+import verifyOtp from "../../utils/otpHandlers/verifyOtp.js";
+import axios from "axios";
 
 const registerRequest = async (payload: TRegisterRequest) => {
-  const { email, password, role, firstName, lastName, ...profileData } =
-    payload;
+  const { email, password, role, firstName, lastName, ...shopData } = payload;
 
   const existingUser = await prisma.credential.findUnique({
     where: {
@@ -34,76 +35,28 @@ const registerRequest = async (payload: TRegisterRequest) => {
 
   const registrationData = {
     email,
-    hashedPassword,
+    password: hashedPassword,
     role,
     firstName,
     lastName,
-    profileData,
-    otp,
+    shopData,
   };
 
   await redis.setex(`reg:${email}`, 35 * 60, JSON.stringify(registrationData));
+  await redis.setex(`otp:${email}`, 5 * 60, otp);
 
   await EventBus.publish(KafkaTopics.NOTIFICATIONS, {
     eventType: NotificationEventTypes.AUTH_OTP,
-    reason: "email_verification",
     source: config.serviceName,
     payload: {
+      reason: "email-verification",
       firstName,
       email,
       otp,
     },
   });
+  return null;
 };
-
-// const verifyRegistration = async (req, res) => {
-//   const { email, otp } = req.body;
-
-//   // 1. Get data from Redis
-//   const cachedData = await redis.get(`reg:${email}`);
-//   if (!cachedData)
-//     return res
-//       .status(400)
-//       .json({ message: "Registration expired or not found" });
-
-//   const data = JSON.parse(cachedData);
-
-//   // 2. Check OTP
-//   if (data.otp !== otp) return res.status(400).json({ message: "Invalid OTP" });
-
-//   // 3. OTP is correct! Create User in DBs using Transaction logic
-//   try {
-//     const result = await prisma.$transaction(async (tx) => {
-//       // Create Credential in Auth-Service
-//       const credential = await tx.credential.create({
-//         data: {
-//           email: data.email,
-//           password: data.hashedPassword,
-//           role: data.role,
-//           isVerified: true,
-//         },
-//       });
-
-//       // Call User-Service via Internal API or gRPC to create profile
-//       await userService.createProfile({
-//         userId: credential.id,
-//         role: data.role,
-//         ...data.profileData,
-//       });
-
-//       return credential;
-//     });
-
-//     // 4. Cleanup Redis
-//     await redis.del(`reg:${email}`);
-
-//     // 5. Generate JWT and finish
-//     const token = generateToken(result);
-//     res.status(201).json({ token, user: result });
-//   } catch (error) {
-//     res.status(500).json({ message: "Transaction failed" });
-//   }
-// };
 
 export const AuthService = {
   registerRequest,

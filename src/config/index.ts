@@ -6,8 +6,7 @@ dotenv.config({ path: path.join(process.cwd(), ".env") });
 export default {
   node_env: process.env.NODE_ENV,
   isDevelopment: process.env.NODE_ENV === "development",
-  isProduction: process.env.NODE_ENV === "production",
-  serviceName: process.env.SERVICE_NAME || "auth-service",
+  serviceName: process.env.SERVICE_NAME,
   port: process.env.PORT,
 
   redis_database_url: process.env.REDIS_DATABASE_URL,

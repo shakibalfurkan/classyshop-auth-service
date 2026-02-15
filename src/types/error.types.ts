@@ -18,6 +18,5 @@ export interface TErrorResponse {
   errorType: string;
   errors: TErrorSource[];
   stack?: string;
-  requestId?: string;
   timestamp?: string;
 }

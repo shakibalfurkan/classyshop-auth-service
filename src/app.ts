@@ -12,9 +12,9 @@ import globalErrorHandler from "./middlewares/globalErrorHandler.js";
 import notFoundHandler from "./middlewares/notFound.js";
 import helmet from "helmet";
 import morgan from "morgan";
-import { morganStream } from "./lib/logger.js";
-import { AuthRoutes } from "./modules/auth/auth.route.js";
+import { morganStream } from "./utils/logger.js";
 import formatUptime from "./utils/formatUptime.js";
+import globalRouter from "./routes/index.js";
 
 export async function createApp(): Promise<Application> {
   const app: Application = express();
@@ -37,11 +37,6 @@ export async function createApp(): Promise<Application> {
     app.use(morgan("combined", { stream: morganStream }));
   }
 
-  app.use((req, _res, next) => {
-    req.id = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-    next();
-  });
-
   app.get("/", (_req: Request, res: Response) => {
     res.status(200).json({
       success: true,
@@ -59,7 +54,7 @@ export async function createApp(): Promise<Application> {
     });
   });
 
-  app.use("/api/v1", AuthRoutes);
+  app.use("/api/v1", globalRouter);
 
   app.use(notFoundHandler);
 

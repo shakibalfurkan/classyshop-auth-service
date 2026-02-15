@@ -2,7 +2,7 @@ import type { ErrorRequestHandler } from "express";
 import { ZodError } from "zod";
 
 import type { TErrorResponse, TErrorSource } from "../types/error.types.js";
-import { logger } from "../lib/logger.js";
+import { logger } from "../utils/logger.js";
 import config from "../config/index.js";
 import { Prisma } from "../generated/prisma/client.js";
 import handleZodError from "../errors/handleZodError.js";
@@ -282,7 +282,6 @@ const globalErrorHandler: ErrorRequestHandler = (
     method: req.method,
     path: req.path,
     ip: req.ip,
-    requestId: req.id,
   };
 
   if (statusCode >= 500) {

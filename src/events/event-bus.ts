@@ -1,5 +1,5 @@
 import { kafka, producer } from "../config/kafka.js";
-import logger from "../lib/logger.js";
+import logger from "../utils/logger.js";
 import { KafkaTopics } from "./event-types.js";
 
 let isProducerConnected = false;
@@ -27,7 +27,11 @@ export const EventBus = {
     groupId: string,
     handler: (data: any) => Promise<void>,
   ) => {
-    const consumer = kafka.consumer({ groupId });
+    const consumer = kafka.consumer({
+      groupId,
+      sessionTimeout: 30000,
+      heartbeatInterval: 3000,
+    });
 
     await consumer.connect();
     await consumer.subscribe({ topic, fromBeginning: false });
