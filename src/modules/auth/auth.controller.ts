@@ -5,7 +5,7 @@ import { AuthService } from "./auth.service.js";
 import sendResponse from "../../utils/sendResponse.js";
 
 const registerRequest = catchAsync(async (req: Request, res: Response) => {
-  const result = AuthService.registerRequest(req.body);
+  const result = await AuthService.registerRequest(req.body);
 
   sendResponse(res, {
     statusCode: 200,

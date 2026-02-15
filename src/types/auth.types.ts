@@ -19,8 +19,10 @@ export type TRegisterRequest = {
   email: string;
   role: UserRoles;
   password: string;
-  shopName?: string;
-  shopEmail?: string;
-  shopPhone?: string;
-  shopAddress?: IShopAddress;
+  shopData?: {
+    shopName: string;
+    shopEmail: string;
+    shopPhone: string;
+    shopAddress: IShopAddress;
+  };
 };

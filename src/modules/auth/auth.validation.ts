@@ -29,14 +29,17 @@ const registerRequestValidationSchema = z.object({
       .min(6, "Password must be at least 6 characters long")
       .max(20, { error: "Password must be less than 20 characters" })
       .trim(),
-    shopName: z.string().min(1, "Shop name is required").optional(),
-    shopEmail: z.email().optional(),
-    shopPhone: z
-      .string()
-      .min(7, "Shop phone must be at least 7 digits")
-      .max(15, "Shop phone must be less than 15 digits")
+    shopData: z
+      .object({
+        shopName: z.string().min(1, "Shop name is required"),
+        shopEmail: z.email(),
+        shopPhone: z
+          .string()
+          .min(7, "Shop phone must be at least 7 digits")
+          .max(15, "Shop phone must be less than 15 digits"),
+        shopAddress: shopAddressValidationSchema,
+      })
       .optional(),
-    shopAddress: shopAddressValidationSchema.optional(),
   }),
 });
 
