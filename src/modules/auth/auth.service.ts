@@ -175,7 +175,36 @@ const verifyRegistration = async (payload: { email: string; otp: string }) => {
   return result;
 };
 
+const resendOtp = async (email: string) => {
+  const cachedData = await redis.get(`reg:${email}`);
+  if (!cachedData) {
+    throw new BadRequestError("Registration expired or not found");
+  }
+
+  await checkOtpRestrictions(email);
+  await trackOtpRequests(email);
+
+  const otp = crypto.randomInt(100000, 999999).toString();
+  await redis.setex(`otp:${email}`, 5 * 60, otp);
+
+  const { firstName } = JSON.parse(cachedData);
+
+  await EventBus.publish(KafkaTopics.NOTIFICATIONS, {
+    eventType: NotificationEventTypes.AUTH_OTP,
+    source: config.serviceName,
+    payload: {
+      reason: "email-verification",
+      firstName,
+      email,
+      otp,
+    },
+  });
+
+  return null;
+};
+
 export const AuthService = {
   registerRequest,
   verifyRegistration,
+  resendOtp,
 };

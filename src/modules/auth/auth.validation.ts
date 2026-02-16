@@ -53,7 +53,14 @@ const verifyRegistrationValidationSchema = z.object({
   }),
 });
 
+const resendOtpValidationSchema = z.object({
+  body: z.object({
+    email: z.email().min(1, "Email is required"),
+  }),
+});
+
 export const AuthValidation = {
   registerRequestValidationSchema,
   verifyRegistrationValidationSchema,
+  resendOtpValidationSchema,
 };

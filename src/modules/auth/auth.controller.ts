@@ -26,7 +26,7 @@ const verifyRegistration = catchAsync(async (req: Request, res: Response) => {
     })) as IRegistrationResult;
 
   if (user.role !== UserRoles.CUSTOMER) {
-    setCookie(res, "accessToken", accessToken!);
+    setCookie(res, "accessToken", accessToken!, 60 * 60 * 1000);
     setCookie(res, "refreshToken", refreshToken!);
   }
 
@@ -47,7 +47,20 @@ const verifyRegistration = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const resendOtp = catchAsync(async (req: Request, res: Response) => {
+  const { email } = req.body;
+  const result = await AuthService.resendOtp(email);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "OTP resent to your email",
+    data: result,
+  });
+});
+
 export const AuthController = {
   registerRequest,
   verifyRegistration,
+  resendOtp,
 };
