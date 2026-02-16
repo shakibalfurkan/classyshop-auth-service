@@ -17,6 +17,9 @@ import checkOtpRestrictions from "../../utils/otpHandlers/checkOtpRestrictions.j
 import trackOtpRequests from "../../utils/otpHandlers/trackOtpRequests.js";
 import { UserRoles } from "../../generated/prisma/enums.js";
 import createInternalSignature from "../../utils/createInternalSignature.js";
+import { JwtHelpers } from "../../utils/jwtHelpers.js";
+import { setCookie } from "../../utils/cookieHandler.js";
+import type { IRegistrationResult } from "./auth.interface.js";
 
 const registerRequest = async (payload: TRegisterRequest) => {
   const { email, password, role, firstName, lastName, shopData } = payload;
@@ -68,10 +71,7 @@ const registerRequest = async (payload: TRegisterRequest) => {
   return null;
 };
 
-export const verifyRegistration = async (payload: {
-  email: string;
-  otp: string;
-}) => {
+const verifyRegistration = async (payload: { email: string; otp: string }) => {
   const { email, otp } = payload;
 
   const cachedData = await redis.get(`reg:${email}`);
@@ -79,25 +79,22 @@ export const verifyRegistration = async (payload: {
     throw new BadRequestError("Registration expired or not found");
   }
 
-  const data = JSON.parse(cachedData);
+  const { password, ...userData } = JSON.parse(cachedData);
 
   await verifyOtp(email, otp);
 
   const credential = await prisma.credential.create({
     data: {
-      email: data.email,
-      password: data.password,
-      role: data.role,
+      email: userData.email,
+      password,
+      role: userData.role,
     },
   });
 
   try {
-    data.delete("password");
-
     const requestBody = {
       id: credential.id,
-      role: data.role,
-      ...data,
+      ...userData,
     };
 
     const signature = createInternalSignature(
@@ -141,17 +138,44 @@ export const verifyRegistration = async (payload: {
   await redis
     .del(`reg:${email}`)
     .catch((err: any) =>
-      console.error(
+      logger.error(
         `[Redis] Failed to delete registration cache for ${email}`,
         err,
       ),
     );
 
-  // const token = generateToken(credential);
+  const jwtPayload = {
+    id: credential.id,
+    role: credential.role,
+    email: credential.email,
+  };
 
-  // return { token, user: credential };
+  const accessToken = JwtHelpers.generateToken(
+    { ...jwtPayload, tokenType: "access" },
+    config.jwt.access_token_secret!,
+    config.jwt.access_token_expires_in!,
+  );
+
+  const refreshToken = JwtHelpers.generateToken(
+    { ...jwtPayload, tokenType: "refresh" },
+    config.jwt.refresh_token_secret!,
+    config.jwt.refresh_token_expires_in!,
+  );
+
+  const result: IRegistrationResult = {
+    user: {
+      id: credential.id,
+      email: credential.email,
+      role: credential.role,
+    },
+    accessToken,
+    refreshToken,
+  };
+
+  return result;
 };
 
 export const AuthService = {
   registerRequest,
+  verifyRegistration,
 };

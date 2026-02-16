@@ -43,6 +43,17 @@ const registerRequestValidationSchema = z.object({
   }),
 });
 
+const verifyRegistrationValidationSchema = z.object({
+  body: z.object({
+    email: z.email().min(1, "Email is required"),
+    otp: z
+      .string()
+      .length(6, "OTP must be exactly 6 digits")
+      .regex(/^\d+$/, "OTP must contain only digits"),
+  }),
+});
+
 export const AuthValidation = {
   registerRequestValidationSchema,
+  verifyRegistrationValidationSchema,
 };
