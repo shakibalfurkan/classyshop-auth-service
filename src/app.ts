@@ -15,12 +15,14 @@ import morgan from "morgan";
 import { morganStream } from "./utils/logger.js";
 import formatUptime from "./utils/formatUptime.js";
 import globalRouter from "./routes/index.js";
+import { requestIdMiddleware } from "./middlewares/requestId.js";
 
-export async function createApp(): Promise<Application> {
+export function createApp(): Application {
   const app: Application = express();
 
   // Middleware setup
   app.use(helmet());
+  app.use(requestIdMiddleware);
   app.use(
     cors({
       origin: config.allowed_origins?.split(","),
@@ -31,10 +33,10 @@ export async function createApp(): Promise<Application> {
   app.use(express.urlencoded({ extended: true, limit: "10mb" }));
   app.use(cookieParser());
 
-  if (config.isDevelopment) {
-    app.use(morgan("dev", { stream: morganStream }));
-  } else {
+  if (config.node_env === "production") {
     app.use(morgan("combined", { stream: morganStream }));
+  } else {
+    app.use(morgan("dev"));
   }
 
   app.get("/", (_req: Request, res: Response) => {

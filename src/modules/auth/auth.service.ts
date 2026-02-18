@@ -71,7 +71,10 @@ const registerRequest = async (payload: TRegisterRequest) => {
   return null;
 };
 
-const verifyRegistration = async (payload: { email: string; otp: string }) => {
+const verifyRegistration = async (
+  requestId: string,
+  payload: { email: string; otp: string },
+) => {
   const { email, otp } = payload;
 
   const cachedData = await redis.get(`reg:${email}`);
@@ -91,47 +94,34 @@ const verifyRegistration = async (payload: { email: string; otp: string }) => {
     },
   });
 
+  const requestBody = {
+    id: credential.id,
+    ...userData,
+  };
+
+  const signature = createInternalSignature(
+    requestBody,
+    config.internal_service_secret!,
+  );
+
   try {
-    const requestBody = {
-      id: credential.id,
-      ...userData,
-    };
-
-    const signature = createInternalSignature(
-      requestBody,
-      config.internal_service_secret!,
-    );
-
     await axios.post(
-      `${config.user_service_url}/internal/create-profile`,
+      `${config.user_service_url}/users/create-profile`,
       requestBody,
       {
         headers: {
           "X-Internal-Signature": signature,
           "X-Internal-Timestamp": Date.now().toString(),
+          "X-Request-ID": requestId,
         },
       },
     );
   } catch (error) {
-    logger.error(
-      `[AuthService] Failed to create profile in UserService for userId: ${credential.id}`,
-      error,
-    );
+    await prisma.credential.delete({ where: { id: credential.id } });
 
-    try {
-      await prisma.credential.delete({ where: { id: credential.id } });
-      logger.info(
-        `[AuthService] Successfully rolled back credential for userId: ${credential.id}`,
-      );
-    } catch (rollbackError) {
-      logger.error(
-        `[CRITICAL] Failed to rollback credential for userId: ${credential.id}`,
-        rollbackError,
-      );
-    }
-
+    logger.error(`[AuthService] Registration failed`, { requestId, error });
     throw new InternalServerError(
-      "User registration failed during profile creation. Please try again.",
+      "User registration failed. Please try again.",
     );
   }
 

@@ -7,7 +7,7 @@ const port = process.env.PORT || config.port;
 async function main(): Promise<void> {
   try {
     // Create app
-    const app = await createApp();
+    const app = createApp();
 
     // Start server
     app.listen(port, () => {

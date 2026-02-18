@@ -19,8 +19,11 @@ const registerRequest = catchAsync(async (req: Request, res: Response) => {
 
 const verifyRegistration = catchAsync(async (req: Request, res: Response) => {
   const { email, otp } = req.body;
+
+  const requestId = req.requestId;
+
   const { accessToken, refreshToken, user } =
-    (await AuthService.verifyRegistration({
+    (await AuthService.verifyRegistration(requestId!, {
       email,
       otp,
     })) as IRegistrationResult;

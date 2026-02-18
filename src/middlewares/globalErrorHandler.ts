@@ -282,6 +282,7 @@ const globalErrorHandler: ErrorRequestHandler = (
     method: req.method,
     path: req.path,
     ip: req.ip,
+    requestId: req.requestId,
   };
 
   if (statusCode >= 500) {
@@ -298,7 +299,7 @@ const globalErrorHandler: ErrorRequestHandler = (
     });
   }
 
-  // Handle non-operational errors (programmer errors)
+  // Handle non-operational errors
   if (!isOperational) {
     logger.error({
       message: "Non-operational error occurred - this should be investigated",

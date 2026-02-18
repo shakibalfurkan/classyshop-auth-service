@@ -1,13 +1,16 @@
+import type { UserRoles } from "../generated/prisma/enums.ts";
+
 type TUser = {
   id: string;
   email: string;
-  role: "ADMIN" | "CUSTOMER" | "VENDOR";
+  role: UserRoles;
 };
 
 declare global {
   namespace Express {
     interface Request {
       user?: TUser;
+      requestId?: string;
     }
   }
 }

@@ -4,7 +4,9 @@ import DailyRotateFile from "winston-daily-rotate-file";
 import config from "../config/index.js";
 
 const consoleFormat = winston.format.combine(
-  winston.format.colorize(),
+  winston.format.colorize({
+    all: true,
+  }),
   winston.format.timestamp({ format: "HH:mm:ss" }),
   winston.format.printf(({ timestamp, level, message, ...meta }) => {
     const metaStr = Object.keys(meta).length
@@ -34,7 +36,6 @@ const isServerless =
   process.env.VERCEL === "1" || process.env.AWS_LAMBDA_FUNCTION_NAME;
 
 if (!isServerless) {
-  // Success logs (info, debug, http)
   transports.push(
     new DailyRotateFile({
       filename: path.join(process.cwd(), "logs", "successes", "app-%DATE%.log"),
@@ -47,17 +48,17 @@ if (!isServerless) {
     }),
   );
 
-  // transports.push(
-  //   new DailyRotateFile({
-  //     filename: path.join(process.cwd(), "logs", "http", "http-%DATE%.log"),
-  //     datePattern: "YYYY-MM-DD",
-  //     level: "http",
-  //     zippedArchive: true,
-  //     maxSize: "50m",
-  //     maxFiles: "7d",
-  //     format: fileFormat,
-  //   }),
-  // );
+  transports.push(
+    new DailyRotateFile({
+      filename: path.join(process.cwd(), "logs", "http", "http-%DATE%.log"),
+      datePattern: "YYYY-MM-DD",
+      level: "http",
+      zippedArchive: true,
+      maxSize: "50m",
+      maxFiles: "7d",
+      format: fileFormat,
+    }),
+  );
 
   // Error logs (warn, error)
   transports.push(
