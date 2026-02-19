@@ -20,6 +20,7 @@ import createInternalSignature from "../../utils/createInternalSignature.js";
 import { JwtHelpers } from "../../utils/jwtHelpers.js";
 import { setCookie } from "../../utils/cookieHandler.js";
 import type { IRegistrationResult } from "./auth.interface.js";
+import { createUserProfile } from "../../lib/axiosClients/userServiceClient.js";
 
 const registerRequest = async (payload: TRegisterRequest) => {
   const { email, password, role, firstName, lastName, shopData } = payload;
@@ -105,17 +106,7 @@ const verifyRegistration = async (
   );
 
   try {
-    await axios.post(
-      `${config.user_service_url}/users/create-profile`,
-      requestBody,
-      {
-        headers: {
-          "X-Internal-Signature": signature,
-          "X-Internal-Timestamp": Date.now().toString(),
-          "X-Request-ID": requestId,
-        },
-      },
-    );
+    await createUserProfile(requestBody, signature, requestId);
   } catch (error) {
     await prisma.credential.delete({ where: { id: credential.id } });
 
