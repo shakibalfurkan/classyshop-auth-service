@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import { v4 as uuidv4 } from "uuid";
+import { randomUUID } from "crypto";
 
 export const requestIdMiddleware = (
   req: Request,
@@ -9,7 +9,7 @@ export const requestIdMiddleware = (
   let requestId = req.headers["x-request-id"] as string;
 
   if (!requestId) {
-    requestId = uuidv4();
+    requestId = randomUUID();
     req.headers["x-request-id"] = requestId;
   }
 

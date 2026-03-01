@@ -11,14 +11,12 @@ import {
   NotificationEventTypes,
 } from "../../events/event-types.js";
 import verifyOtp from "../../utils/otpHandlers/verifyOtp.js";
-import axios from "axios";
 import logger from "../../utils/logger.js";
 import checkOtpRestrictions from "../../utils/otpHandlers/checkOtpRestrictions.js";
 import trackOtpRequests from "../../utils/otpHandlers/trackOtpRequests.js";
 import { UserRoles } from "../../generated/prisma/enums.js";
 import createInternalSignature from "../../utils/createInternalSignature.js";
 import { JwtHelpers } from "../../utils/jwtHelpers.js";
-import { setCookie } from "../../utils/cookieHandler.js";
 import type { IRegistrationResult } from "./auth.interface.js";
 import { createUserProfile } from "../../lib/axiosClients/userServiceClient.js";
 
@@ -64,7 +62,7 @@ const registerRequest = async (payload: TRegisterRequest) => {
     source: config.serviceName,
     payload: {
       reason: "email-verification",
-      firstName,
+      name: firstName,
       email,
       otp,
     },
@@ -152,6 +150,15 @@ const verifyRegistration = async (
     accessToken,
     refreshToken,
   };
+
+  await EventBus.publish(KafkaTopics.NOTIFICATIONS, {
+    eventType: NotificationEventTypes.AUTH_REGISTERED,
+    source: config.serviceName,
+    payload: {
+      name: userData.firstName,
+      email,
+    },
+  });
 
   return result;
 };

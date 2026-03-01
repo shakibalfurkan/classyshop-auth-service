@@ -25,7 +25,7 @@ export function createApp(): Application {
   app.use(requestIdMiddleware);
   app.use(
     cors({
-      origin: config.allowed_origins?.split(","),
+      origin: config.allowed_origins,
       credentials: true,
     }),
   );

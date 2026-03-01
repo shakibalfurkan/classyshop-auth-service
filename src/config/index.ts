@@ -37,7 +37,9 @@ export default {
   smtp_user: process.env.SMTP_USER,
   smtp_pass: process.env.SMTP_PASS,
 
-  allowed_origins: process.env.ALLOWED_ORIGINS,
+  allowed_origins:
+    process.env.ALLOWED_ORIGINS?.split(",").map((origin) => origin.trim()) ??
+    [],
 
   user_client_url: process.env.USER_CLIENT_URL,
   seller_client_url: process.env.SELLER_CLIENT_URL,

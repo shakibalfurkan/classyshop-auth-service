@@ -163,20 +163,6 @@ export const recordFailure = (): void => {
   }
 };
 
-// ─── Service Health ──────────────────────────────────────────────────────────
-
-export const checkUserServiceHealth = async (): Promise<boolean> => {
-  try {
-    const res = await userServiceClient.get("/health", { timeout: 5000 });
-    return res.status === 200;
-  } catch (error) {
-    logger.error("User Service health check failed", {
-      error: error instanceof Error ? error.message : String(error),
-    });
-    return false;
-  }
-};
-
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 export const internalHeaders = (signature: string, requestId: string) => ({
