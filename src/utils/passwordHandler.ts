@@ -8,10 +8,7 @@ export const isPasswordMatched = async (
   return isMatched;
 };
 
-export const hashPassword = async (
-  password: string,
-  saltRound: string | number,
-) => {
-  const hashedPassword = await bcrypt.hash(password, Number(saltRound));
+export const hashPassword = async (password: string, saltRound: number) => {
+  const hashedPassword = await bcrypt.hash(password, saltRound);
   return hashedPassword;
 };

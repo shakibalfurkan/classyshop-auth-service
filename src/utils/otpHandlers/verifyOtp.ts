@@ -1,4 +1,4 @@
-import { redis } from "../../config/redis.js";
+import { redisClient } from "../../config/redis.js";
 import { BadRequestError } from "../../errors/AppError.js";
 
 const MAX_ATTEMPTS = 3;
@@ -9,23 +9,23 @@ const verifyOtp = async (email: string, otp: string) => {
   const attemptKey = `otp_attempts:${email}`;
   const otpKey = `otp:${email}`;
 
-  const isBlocked = await redis.get(blockKey);
+  const isBlocked = await redisClient.get(blockKey);
   if (isBlocked) {
     throw new BadRequestError(
       "Too many failed attempts. Please try again after 30 minutes.",
     );
   }
 
-  const storedOtp = await redis.get(otpKey);
+  const storedOtp = await redisClient.get(otpKey);
   if (!storedOtp) {
     throw new BadRequestError("Invalid or Expired OTP");
   }
 
   if (otp !== storedOtp) {
-    const failedAttempts = Number((await redis.get(attemptKey)) ?? 0) + 1;
+    const failedAttempts = Number((await redisClient.get(attemptKey)) ?? 0) + 1;
 
     if (failedAttempts > MAX_ATTEMPTS) {
-      await redis
+      await redisClient
         .multi()
         .set(blockKey, "blocked", "EX", BLOCK_TIME)
         .del(otpKey, attemptKey)
@@ -36,14 +36,19 @@ const verifyOtp = async (email: string, otp: string) => {
       );
     }
 
-    await redis.set(attemptKey, failedAttempts.toString(), "EX", BLOCK_TIME);
+    await redisClient.set(
+      attemptKey,
+      failedAttempts.toString(),
+      "EX",
+      BLOCK_TIME,
+    );
 
     throw new BadRequestError(
       `Invalid OTP. ${MAX_ATTEMPTS - failedAttempts} attempts left.`,
     );
   }
 
-  await redis.del(otpKey, attemptKey);
+  await redisClient.del(otpKey, attemptKey);
 };
 
 export default verifyOtp;

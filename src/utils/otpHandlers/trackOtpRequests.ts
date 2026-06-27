@@ -1,4 +1,4 @@
-import { redis } from "../../config/redis.js";
+import { redisClient } from "../../config/redis.js";
 import { BadRequestError } from "../../errors/AppError.js";
 
 const OTP_REQUEST_LIMIT = 3;
@@ -12,31 +12,36 @@ const trackOtpRequests = async (email: string): Promise<boolean> => {
   const otpSpamBlockKey = `otp_spam_block:${normalizedEmail}`;
   const otpCooldownKey = `otp_cooldown:${normalizedEmail}`;
 
-  const isSpamBlocked = await redis.get(otpSpamBlockKey);
+  const isSpamBlocked = await redisClient.get(otpSpamBlockKey);
   if (isSpamBlocked) {
     throw new BadRequestError(
       "Too many OTP requests. Please try again after 60 minutes.",
     );
   }
 
-  const currentCount = await redis.get(otpRequestCountKey);
+  const currentCount = await redisClient.get(otpRequestCountKey);
   const otpRequests = parseInt(currentCount || "0") + 1;
 
   if (otpRequests > OTP_REQUEST_LIMIT) {
-    await redis.set(otpSpamBlockKey, "blocked", "EX", OTP_SPAM_BLOCK_DURATION);
+    await redisClient.set(
+      otpSpamBlockKey,
+      "blocked",
+      "EX",
+      OTP_SPAM_BLOCK_DURATION,
+    );
     throw new BadRequestError(
       "Too many OTP requests. Please try again after 60 minutes.",
     );
   }
 
   await Promise.all([
-    redis.set(
+    redisClient.set(
       otpRequestCountKey,
       otpRequests.toString(),
       "EX",
       OTP_REQUEST_WINDOW,
     ),
-    redis.set(otpCooldownKey, "active", "EX", OTP_COOLDOWN_DURATION),
+    redisClient.set(otpCooldownKey, "active", "EX", OTP_COOLDOWN_DURATION),
   ]);
 
   return true;

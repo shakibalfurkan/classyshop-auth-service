@@ -7,7 +7,7 @@ export default {
   node_env: process.env.NODE_ENV,
   isDevelopment: process.env.NODE_ENV === "development",
   serviceName: process.env.SERVICE_NAME,
-  port: process.env.PORT,
+  port: Number(process.env.PORT),
 
   redis_database_url: process.env.REDIS_DATABASE_URL,
 
@@ -26,16 +26,16 @@ export default {
     reset_token_expires_in: process.env.JWT_RESET_TOKEN_EXPIRES_IN,
   },
 
-  bcrypt_salt_round: process.env.BCRYPT_SALT_ROUND,
+  bcrypt_salt_round: Number(process.env.BCRYPT_SALT_ROUND),
 
   user_service_url: process.env.USER_SERVICE_URL,
   internal_service_secret: process.env.INTERNAL_SERVICE_SECRET,
 
-  smtp_host: process.env.SMTP_HOST,
-  smtp_port: Number(process.env.SMTP_PORT) || 587,
-  smtp_service: process.env.SMTP_SERVICE,
-  smtp_user: process.env.SMTP_USER,
-  smtp_pass: process.env.SMTP_PASS,
+  // smtp_host: process.env.SMTP_HOST,
+  // smtp_port: Number(process.env.SMTP_PORT) || 587,
+  // smtp_service: process.env.SMTP_SERVICE,
+  // smtp_user: process.env.SMTP_USER,
+  // smtp_pass: process.env.SMTP_PASS,
 
   allowed_origins:
     process.env.ALLOWED_ORIGINS?.split(",").map((origin) => origin.trim()) ??

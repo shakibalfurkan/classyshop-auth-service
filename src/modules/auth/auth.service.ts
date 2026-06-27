@@ -4,7 +4,7 @@ import { BadRequestError, InternalServerError } from "../../errors/AppError.js";
 import { prisma } from "../../lib/prisma.js";
 import type { TRegisterRequest } from "../../types/auth.types.js";
 import { hashPassword } from "../../utils/passwordHandler.js";
-import { redis } from "../../config/redis.js";
+import { redisClient } from "../../config/redis.js";
 import { EventBus } from "../../events/event-bus.js";
 import {
   KafkaTopics,
@@ -54,8 +54,12 @@ const registerRequest = async (payload: TRegisterRequest) => {
     registrationData.shopData = shopData;
   }
 
-  await redis.setex(`reg:${email}`, 35 * 60, JSON.stringify(registrationData));
-  await redis.setex(`otp:${email}`, 5 * 60, otp);
+  await redisClient.setex(
+    `reg:${email}`,
+    35 * 60,
+    JSON.stringify(registrationData),
+  );
+  await redisClient.setex(`otp:${email}`, 5 * 60, otp);
 
   await EventBus.publish(KafkaTopics.NOTIFICATIONS, {
     eventType: NotificationEventTypes.AUTH_OTP,
@@ -76,7 +80,7 @@ const verifyRegistration = async (
 ) => {
   const { email, otp } = payload;
 
-  const cachedData = await redis.get(`reg:${email}`);
+  const cachedData = await redisClient.get(`reg:${email}`);
   if (!cachedData) {
     throw new BadRequestError("Registration expired or not found");
   }
@@ -114,11 +118,11 @@ const verifyRegistration = async (
     );
   }
 
-  await redis
+  await redisClient
     .del(`reg:${email}`)
     .catch((err: any) =>
       logger.error(
-        `[Redis] Failed to delete registration cache for ${email}`,
+        `[redisClient] Failed to delete registration cache for ${email}`,
         err,
       ),
     );
@@ -164,7 +168,7 @@ const verifyRegistration = async (
 };
 
 const resendOtp = async (email: string) => {
-  const cachedData = await redis.get(`reg:${email}`);
+  const cachedData = await redisClient.get(`reg:${email}`);
   if (!cachedData) {
     throw new BadRequestError("Registration expired or not found");
   }
@@ -173,7 +177,7 @@ const resendOtp = async (email: string) => {
   await trackOtpRequests(email);
 
   const otp = crypto.randomInt(100000, 999999).toString();
-  await redis.setex(`otp:${email}`, 5 * 60, otp);
+  await redisClient.setex(`otp:${email}`, 5 * 60, otp);
 
   const { firstName } = JSON.parse(cachedData);
 
