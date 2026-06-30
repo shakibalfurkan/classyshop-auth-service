@@ -1,15 +1,42 @@
 import dotenv from "dotenv";
 import path from "path";
+import { AppError } from "../errors/AppError.js";
 
 dotenv.config({ path: path.join(process.cwd(), ".env") });
 
-export default {
-  node_env: process.env.NODE_ENV,
-  isDevelopment: process.env.NODE_ENV === "development",
-  serviceName: process.env.SERVICE_NAME,
-  port: Number(process.env.PORT),
+/**
+ * Validates that all required environment variables are present at startup.
+ * Throws immediately with a clear message so the service never starts in a broken state.
+ */
+function validateEnvVars(): void {
+  const required = [
+    "DATABASE_URL",
+    "JWT_ACCESS_TOKEN_SECRET",
+    "JWT_REFRESH_TOKEN_SECRET",
+    "JWT_RESET_TOKEN_SECRET",
+    "REDIS_DATABASE_URL",
+    "INTERNAL_SERVICE_SECRET",
+  ] as const;
 
-  redis_database_url: process.env.REDIS_DATABASE_URL,
+  const missing = required.filter(
+    (key) => !process.env[key] || process.env[key]!.trim() === "",
+  );
+
+  if (missing.length > 0) {
+    const msg = `❌ CRITICAL: Missing required environment variables: ${missing.join(", ")}`;
+    throw new AppError(400, msg);
+  }
+}
+
+// Run validation immediately — fail fast before any other module loads
+validateEnvVars();
+
+const config = {
+  node_env: process.env.NODE_ENV ?? "development",
+  serviceName: process.env.SERVICE_NAME ?? "auth-service",
+  port: Number(process.env.PORT) || 5001,
+
+  redis_database_url: process.env.REDIS_DATABASE_URL!,
 
   kafka: {
     broker: process.env.KAFKA_BROKER,
@@ -18,29 +45,26 @@ export default {
   },
 
   jwt: {
-    access_token_secret: process.env.JWT_ACCESS_TOKEN_SECRET,
-    access_token_expires_in: process.env.JWT_ACCESS_TOKEN_EXPIRES_IN,
-    refresh_token_secret: process.env.JWT_REFRESH_TOKEN_SECRET,
-    refresh_token_expires_in: process.env.JWT_REFRESH_TOKEN_EXPIRES_IN,
-    reset_token_secret: process.env.JWT_RESET_TOKEN_SECRET,
-    reset_token_expires_in: process.env.JWT_RESET_TOKEN_EXPIRES_IN,
+    access_token_secret: process.env.JWT_ACCESS_TOKEN_SECRET!,
+    access_token_expires_in: process.env.JWT_ACCESS_TOKEN_EXPIRES_IN ?? "15m",
+    refresh_token_secret: process.env.JWT_REFRESH_TOKEN_SECRET!,
+    refresh_token_expires_in: process.env.JWT_REFRESH_TOKEN_EXPIRES_IN ?? "7d",
+    reset_token_secret: process.env.JWT_RESET_TOKEN_SECRET!,
+    reset_token_expires_in: process.env.JWT_RESET_TOKEN_EXPIRES_IN ?? "15m",
   },
 
-  bcrypt_salt_round: Number(process.env.BCRYPT_SALT_ROUND),
+  // Default to 12 rounds if not configured — secure default
+  bcrypt_salt_round: Number(process.env.BCRYPT_SALT_ROUND) || 12,
 
-  user_service_url: process.env.USER_SERVICE_URL,
-  internal_service_secret: process.env.INTERNAL_SERVICE_SECRET,
-
-  // smtp_host: process.env.SMTP_HOST,
-  // smtp_port: Number(process.env.SMTP_PORT) || 587,
-  // smtp_service: process.env.SMTP_SERVICE,
-  // smtp_user: process.env.SMTP_USER,
-  // smtp_pass: process.env.SMTP_PASS,
+  user_service_url: process.env.USER_SERVICE_URL ?? "http://localhost:5003",
+  internal_service_secret: process.env.INTERNAL_SERVICE_SECRET!,
 
   allowed_origins:
     process.env.ALLOWED_ORIGINS?.split(",").map((origin) => origin.trim()) ??
     [],
 
-  user_client_url: process.env.USER_CLIENT_URL,
-  seller_client_url: process.env.SELLER_CLIENT_URL,
+  user_client_url: process.env.USER_CLIENT_URL ?? "http://localhost:3000",
+  seller_client_url: process.env.SELLER_CLIENT_URL ?? "http://localhost:5173",
 } as const;
+
+export default config;

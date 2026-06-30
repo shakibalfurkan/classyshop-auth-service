@@ -5,9 +5,9 @@ const MAX_ATTEMPTS = 3;
 const BLOCK_TIME = 30 * 60;
 
 const verifyOtp = async (email: string, otp: string) => {
-  const blockKey = `otp_block:${email}`;
-  const attemptKey = `otp_attempts:${email}`;
-  const otpKey = `otp:${email}`;
+  const blockKey = `auth:otp_block:${email}`;
+  const attemptKey = `auth:otp_attempts:${email}`;
+  const otpKey = `auth:otp:${email}`;
 
   const isBlocked = await redisClient.get(blockKey);
   if (isBlocked) {

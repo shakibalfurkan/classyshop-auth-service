@@ -8,9 +8,9 @@ const OTP_COOLDOWN_DURATION = 60;
 
 const trackOtpRequests = async (email: string): Promise<boolean> => {
   const normalizedEmail = email.toLowerCase().trim();
-  const otpRequestCountKey = `otp_request_count:${normalizedEmail}`;
-  const otpSpamBlockKey = `otp_spam_block:${normalizedEmail}`;
-  const otpCooldownKey = `otp_cooldown:${normalizedEmail}`;
+  const otpRequestCountKey = `auth:otp_request_count:${normalizedEmail}`;
+  const otpSpamBlockKey = `auth:otp_spam_block:${normalizedEmail}`;
+  const otpCooldownKey = `auth:otp_cooldown:${normalizedEmail}`;
 
   const isSpamBlocked = await redisClient.get(otpSpamBlockKey);
   if (isSpamBlocked) {
