@@ -124,10 +124,41 @@ const refreshToken = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const logout = catchAsync(async (req: Request, res: Response) => {
+  const token = req.cookies?.refreshToken || req.body.refreshToken;
+
+  await AuthService.logout(token);
+
+  clearCookie(res, "accessToken");
+  clearCookie(res, "refreshToken");
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Logged out successfully",
+    data: null,
+  });
+});
+
+const requestPasswordReset = catchAsync(async (req: Request, res: Response) => {
+  const { email } = req.body;
+  await AuthService.requestPasswordReset(email);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message:
+      "If an account with that email exists, a password reset link has been sent.",
+    data: null,
+  });
+});
+
 export const AuthController = {
   registerRequest,
   verifyRegistration,
   resendOtp,
   login,
   refreshToken,
+  logout,
+  requestPasswordReset,
 };
