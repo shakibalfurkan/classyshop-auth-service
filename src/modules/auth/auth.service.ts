@@ -391,6 +391,44 @@ const logout = async (token: string): Promise<void> => {
   await revokeRefreshToken(token);
 };
 
+const requestPasswordReset = async (email: string): Promise<void> => {
+  const credential = await prisma.credential.findUnique({
+    where: { email },
+  });
+
+  if (!credential) {
+    return;
+  }
+
+  const resetToken = JwtHelpers.generateToken(
+    {
+      id: credential.id,
+      role: credential.role,
+      email: credential.email,
+      tokenType: "reset",
+    },
+    config.jwt.reset_token_secret,
+    config.jwt.reset_token_expires_in,
+  );
+
+  await prisma.passwordReset.create({
+    data: {
+      credentialId: credential.id,
+      resetToken,
+      expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+    },
+  });
+
+  await EventBus.publish(KafkaTopics.NOTIFICATIONS, {
+    eventType: NotificationEventTypes.AUTH_PASSWORD_RESET,
+    source: config.serviceName,
+    payload: {
+      email,
+      resetToken,
+    },
+  });
+};
+
 export const AuthService = {
   registerRequest,
   verifyRegistration,
@@ -398,4 +436,5 @@ export const AuthService = {
   login,
   refreshToken,
   logout,
+  requestPasswordReset,
 };
