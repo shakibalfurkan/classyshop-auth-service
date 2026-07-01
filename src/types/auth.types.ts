@@ -27,3 +27,16 @@ export type TRegisterRequest = {
     shopAddress: IShopAddress;
   };
 };
+
+export type TLoginRequest = {
+  email: string;
+  password: string;
+};
+
+export type TRefreshTokenRequest = {
+  refreshToken: string;
+};
+
+export type TLogoutRequest = {
+  refreshToken: string;
+};
