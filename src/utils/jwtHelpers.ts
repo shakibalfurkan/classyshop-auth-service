@@ -9,7 +9,7 @@ export interface ITokenPayload {
   id: string;
   role: string;
   email: string;
-  tokenType?: "access" | "refresh";
+  tokenType?: "access" | "refresh" | "reset";
 }
 
 export interface IDecodedToken extends ITokenPayload, JwtPayload {

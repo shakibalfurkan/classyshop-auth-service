@@ -10,7 +10,7 @@ declare global {
   namespace Express {
     interface Request {
       user?: TUser;
-      requestId?: string;
+      requestId: string;
     }
   }
 }

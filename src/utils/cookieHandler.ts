@@ -7,13 +7,30 @@ export const setCookie = (
   tokenValue: string,
   maxAge: number = 7 * 24 * 60 * 60 * 1000,
 ) => {
-  const isProd = config.node_env !== "development";
+  const isProd = config.node_env === "production";
 
-  res.cookie(tokenName, tokenValue, {
+  const sameSitePolicy =
+    tokenName === "accessToken" ? ("strict" as const) : ("none" as const);
+
+  const cookieOptions: Record<string, unknown> = {
     httpOnly: true,
     secure: isProd,
-    sameSite: isProd ? "none" : "lax",
+    sameSite: isProd ? sameSitePolicy : "lax",
     maxAge,
+    path: "/",
+    priority: "high",
+  };
+
+  res.cookie(tokenName, tokenValue, cookieOptions);
+};
+
+export const clearCookie = (res: Response, tokenName: string): void => {
+  const isProd = config.node_env === "production";
+
+  res.clearCookie(tokenName, {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isProd ? ("strict" as const) : "lax",
     path: "/",
   });
 };

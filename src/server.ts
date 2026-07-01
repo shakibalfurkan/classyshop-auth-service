@@ -25,7 +25,7 @@ async function main(): Promise<void> {
     }
 
     // Connect Kafka producer once at startup — not on every publish
-    if (config.kafka.broker && config.kafka.username && config.kafka.password) {
+    if (producer) {
       await producer.connect();
       logger.info("Kafka producer connected successfully.");
     } else {
@@ -34,16 +34,15 @@ async function main(): Promise<void> {
       );
     }
 
-   server = createServer(app);
+    server = createServer(app);
 
     server.listen(config.port, () => {
       logger.info(
         `ClassyShop ${config.serviceName} is running on port ${config.port}`,
       );
     });
-
   } catch (err) {
-   logger.error("Failed to start server:", err);
+    logger.error("Failed to start server:", err);
     process.exit(1);
   }
 }
@@ -57,10 +56,10 @@ const shutdown = async (signal: string) => {
     server.close(async () => {
       logger.info("HTTP server closed.");
 
-        // Disconnect downstream services in parallel
+      // Disconnect downstream services in parallel
       await Promise.allSettled([
         redisClient.quit(),
-        producer.disconnect(),
+        producer ? producer.disconnect() : Promise.resolve(),
         disconnectPrisma(),
       ]);
 

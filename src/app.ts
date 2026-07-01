@@ -20,8 +20,34 @@ import { requestIdMiddleware } from "./middlewares/requestId.js";
 export function createApp(): Application {
   const app: Application = express();
 
-  // Middleware setup
-  app.use(helmet());
+  app.use(
+    helmet({
+      contentSecurityPolicy:
+        config.node_env === "production"
+          ? {
+              useDefaults: true,
+              directives: {
+                "default-src": ["'self'"],
+                "script-src": ["'self'"],
+                "style-src": ["'self'", "'unsafe-inline'"],
+                "img-src": ["'self'", "data:", "https:"],
+                "font-src": ["'self'", "https:", "data:"],
+                "connect-src": ["'self'"],
+                "frame-ancestors": ["'none'"],
+                "form-action": ["'self'"],
+              },
+            }
+          : false,
+      hsts:
+        config.node_env === "production"
+          ? { maxAge: 31536000, includeSubDomains: true, preload: true }
+          : false,
+      noSniff: true,
+      xssFilter: true,
+      referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+    }),
+  );
+
   app.use(requestIdMiddleware);
   app.use(
     cors({
@@ -30,6 +56,7 @@ export function createApp(): Application {
     }),
   );
   app.use(express.json({ limit: "10mb" }));
+
   app.use(express.urlencoded({ extended: true, limit: "10mb" }));
   app.use(cookieParser());
 

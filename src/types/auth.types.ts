@@ -1,4 +1,5 @@
 import type { UserRoles } from "../generated/prisma/enums.js";
+
 interface IShopAddress {
   street: string;
   city: string;

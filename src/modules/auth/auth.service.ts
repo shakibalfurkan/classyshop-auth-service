@@ -1,9 +1,16 @@
 import crypto from "crypto";
 import config from "../../config/index.js";
-import { BadRequestError, InternalServerError } from "../../errors/AppError.js";
+import {
+  BadRequestError,
+  InternalServerError,
+  UnauthorizedError,
+} from "../../errors/AppError.js";
 import { prisma } from "../../lib/prisma.js";
 import type { TRegisterRequest } from "../../types/auth.types.js";
-import { hashPassword } from "../../utils/passwordHandler.js";
+import {
+  hashPassword,
+  isPasswordMatched,
+} from "../../utils/passwordHandler.js";
 import { redisClient } from "../../config/redis.js";
 import { EventBus } from "../../events/event-bus.js";
 import {
@@ -17,16 +24,129 @@ import trackOtpRequests from "../../utils/otpHandlers/trackOtpRequests.js";
 import { UserRoles } from "../../generated/prisma/enums.js";
 import createInternalSignature from "../../utils/createInternalSignature.js";
 import { JwtHelpers } from "../../utils/jwtHelpers.js";
-import type { IRegistrationResult } from "./auth.interface.js";
+
 import { createUserProfile } from "../../lib/axiosClients/userServiceClient.js";
+
+// ─── Constants ───
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOCK_DURATION_MS = 15 * 60 * 1000; // 15 minutes
+const REFRESH_TOKEN_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+// ─── Helpers ───
+
+/** Generate a cryptographically random token string. */
+function generateTokenString(): string {
+  return crypto.randomBytes(64).toString("hex");
+}
+
+/** Build the JWT payload for a credential. */
+function buildJwtPayload(credential: {
+  id: string;
+  email: string;
+  role: string;
+}) {
+  return { id: credential.id, role: credential.role, email: credential.email };
+}
+
+/** Issue an access token. */
+function issueAccessToken(payload: ReturnType<typeof buildJwtPayload>): string {
+  return JwtHelpers.generateToken(
+    { ...payload, tokenType: "access" },
+    config.jwt.access_token_secret,
+    config.jwt.access_token_expires_in,
+  );
+}
+
+/** Issue a refresh token (opaque, stored in DB). */
+async function issueRefreshToken(
+  credentialId: string,
+  familyId?: string,
+): Promise<{ token: string; familyId: string }> {
+  const token = generateTokenString();
+  const family = familyId ?? crypto.randomUUID();
+
+  await prisma.refreshToken.create({
+    data: {
+      token,
+      credentialId,
+      familyId: family,
+      expiresAt: new Date(Date.now() + REFRESH_TOKEN_EXPIRY_MS),
+    },
+  });
+
+  return { token, familyId: family };
+}
+
+/** Revoke all refresh tokens in a family (used during rotation). */
+async function revokeTokenFamily(familyId: string): Promise<void> {
+  await prisma.refreshToken.updateMany({
+    where: { familyId, isRevoked: false },
+    data: { isRevoked: true },
+  });
+}
+
+/** Revoke a specific refresh token (used during logout). */
+async function revokeRefreshToken(token: string): Promise<void> {
+  await prisma.refreshToken.updateMany({
+    where: { token, isRevoked: false },
+    data: { isRevoked: true },
+  });
+}
+
+/** Check if a credential is locked due to too many failed login attempts. */
+function checkLockout(credential: {
+  failedLoginAttempts: number;
+  lockedUntil: Date | null;
+}): void {
+  if (credential.lockedUntil && credential.lockedUntil > new Date()) {
+    const remainingMs = credential.lockedUntil.getTime() - Date.now();
+    const remainingMin = Math.ceil(remainingMs / 60000);
+    throw new UnauthorizedError(
+      `Account temporarily locked. Try again in ${remainingMin} minute(s).`,
+    );
+  }
+}
+
+/** Increment failed login attempts and lock if threshold exceeded. */
+async function handleFailedLogin(credentialId: string): Promise<void> {
+  // First increment the counter
+  const updated = await prisma.credential.update({
+    where: { id: credentialId },
+    data: {
+      failedLoginAttempts: { increment: 1 },
+    },
+  });
+
+  // If threshold reached, lock the account
+  if (updated.failedLoginAttempts >= MAX_LOGIN_ATTEMPTS) {
+    await prisma.credential.update({
+      where: { id: credentialId },
+      data: {
+        lockedUntil: new Date(Date.now() + LOCK_DURATION_MS),
+      },
+    });
+  }
+}
+
+/** Reset failed login counters on successful login. */
+async function resetLoginAttempts(credentialId: string): Promise<void> {
+  await prisma.credential.update({
+    where: { id: credentialId },
+    data: {
+      failedLoginAttempts: 0,
+      lockedUntil: null,
+      lastLogin: new Date(),
+    },
+  });
+}
+
+// ─── Public Service Methods ───
 
 const registerRequest = async (payload: TRegisterRequest) => {
   const { email, password, role, firstName, lastName, shopData } = payload;
 
   const existingUser = await prisma.credential.findUnique({
-    where: {
-      email,
-    },
+    where: { email },
   });
 
   if (existingUser) {
@@ -36,10 +156,7 @@ const registerRequest = async (payload: TRegisterRequest) => {
   await checkOtpRestrictions(email);
   await trackOtpRequests(email);
 
-  const hashedPassword = await hashPassword(
-    password,
-    config.bcrypt_salt_round!,
-  );
+  const hashedPassword = await hashPassword(password, config.bcrypt_salt_round);
 
   const otp = crypto.randomInt(100000, 999999).toString();
 
@@ -55,11 +172,11 @@ const registerRequest = async (payload: TRegisterRequest) => {
   }
 
   await redisClient.setex(
-    `reg:${email}`,
+    `auth:reg:${email}`,
     35 * 60,
     JSON.stringify(registrationData),
   );
-  await redisClient.setex(`otp:${email}`, 5 * 60, otp);
+  await redisClient.setex(`auth:otp:${email}`, 5 * 60, otp);
 
   await EventBus.publish(KafkaTopics.NOTIFICATIONS, {
     eventType: NotificationEventTypes.AUTH_OTP,
@@ -80,7 +197,7 @@ const verifyRegistration = async (
 ) => {
   const { email, otp } = payload;
 
-  const cachedData = await redisClient.get(`reg:${email}`);
+  const cachedData = await redisClient.get(`auth:reg:${email}`);
   if (!cachedData) {
     throw new BadRequestError("Registration expired or not found");
   }
@@ -104,7 +221,7 @@ const verifyRegistration = async (
 
   const signature = createInternalSignature(
     requestBody,
-    config.internal_service_secret!,
+    config.internal_service_secret,
   );
 
   try {
@@ -119,7 +236,7 @@ const verifyRegistration = async (
   }
 
   await redisClient
-    .del(`reg:${email}`)
+    .del(`auth:reg:${email}`)
     .catch((err: any) =>
       logger.error(
         `[redisClient] Failed to delete registration cache for ${email}`,
@@ -127,23 +244,10 @@ const verifyRegistration = async (
       ),
     );
 
-  const jwtPayload = {
-    id: credential.id,
-    role: credential.role,
-    email: credential.email,
-  };
+  const jwtPayload = buildJwtPayload(credential);
 
-  const accessToken = JwtHelpers.generateToken(
-    { ...jwtPayload, tokenType: "access" },
-    config.jwt.access_token_secret!,
-    config.jwt.access_token_expires_in!,
-  );
-
-  const refreshToken = JwtHelpers.generateToken(
-    { ...jwtPayload, tokenType: "refresh" },
-    config.jwt.refresh_token_secret!,
-    config.jwt.refresh_token_expires_in!,
-  );
+  const accessToken = issueAccessToken(jwtPayload);
+  const { token: refreshToken } = await issueRefreshToken(credential.id);
 
   const result: IRegistrationResult = {
     user: {
@@ -168,7 +272,7 @@ const verifyRegistration = async (
 };
 
 const resendOtp = async (email: string) => {
-  const cachedData = await redisClient.get(`reg:${email}`);
+  const cachedData = await redisClient.get(`auth:reg:${email}`);
   if (!cachedData) {
     throw new BadRequestError("Registration expired or not found");
   }
@@ -177,7 +281,7 @@ const resendOtp = async (email: string) => {
   await trackOtpRequests(email);
 
   const otp = crypto.randomInt(100000, 999999).toString();
-  await redisClient.setex(`otp:${email}`, 5 * 60, otp);
+  await redisClient.setex(`auth:otp:${email}`, 5 * 60, otp);
 
   const { firstName } = JSON.parse(cachedData);
 

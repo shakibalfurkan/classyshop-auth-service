@@ -4,10 +4,6 @@ import { AppError } from "../errors/AppError.js";
 
 dotenv.config({ path: path.join(process.cwd(), ".env") });
 
-/**
- * Validates that all required environment variables are present at startup.
- * Throws immediately with a clear message so the service never starts in a broken state.
- */
 function validateEnvVars(): void {
   const required = [
     "DATABASE_URL",
@@ -53,7 +49,6 @@ const config = {
     reset_token_expires_in: process.env.JWT_RESET_TOKEN_EXPIRES_IN ?? "15m",
   },
 
-  // Default to 12 rounds if not configured — secure default
   bcrypt_salt_round: Number(process.env.BCRYPT_SALT_ROUND) || 12,
 
   user_service_url: process.env.USER_SERVICE_URL ?? "http://localhost:5003",

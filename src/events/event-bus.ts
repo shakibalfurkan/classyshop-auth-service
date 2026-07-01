@@ -2,16 +2,15 @@ import { kafka, producer } from "../config/kafka.js";
 import logger from "../utils/logger.js";
 import { KafkaTopics } from "./event-types.js";
 
-let isProducerConnected = false;
-
 export const EventBus = {
   publish: async (topic: KafkaTopics, message: any) => {
     try {
-      if (!isProducerConnected) {
-        await producer.connect();
-        isProducerConnected = true;
+      if (!producer) {
+        logger.warn(
+          `[EventBus] Kafka producer not initialized — skipping publish to ${topic}`,
+        );
+        return;
       }
-
       await producer.send({
         topic,
         messages: [{ value: JSON.stringify(message) }],
@@ -27,6 +26,12 @@ export const EventBus = {
     groupId: string,
     handler: (data: any) => Promise<void>,
   ) => {
+    if (!kafka) {
+      logger.warn(
+        `[EventBus] Kafka not initialized — cannot subscribe to ${topic}`,
+      );
+      return;
+    }
     const consumer = kafka.consumer({
       groupId,
       sessionTimeout: 30000,

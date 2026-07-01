@@ -2,7 +2,7 @@ import type { ErrorRequestHandler } from "express";
 import { ZodError } from "zod";
 
 import type { TErrorResponse, TErrorSource } from "../types/error.types.js";
-import { logger } from "../utils/logger.js";
+import logger from "../utils/logger.js";
 import config from "../config/index.js";
 import { Prisma } from "../generated/prisma/client.js";
 import handleZodError from "../errors/handleZodError.js";
@@ -265,7 +265,7 @@ const globalErrorHandler: ErrorRequestHandler = (
     ];
   }
 
-  //* Construct error response
+  //! Construct error response
   const errorResponse: TErrorResponse = {
     success: false,
     message,

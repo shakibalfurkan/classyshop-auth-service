@@ -1,4 +1,19 @@
 import z from "zod";
+
+// ─── Shared email schema ───
+const emailSchema = z.email().trim().toLowerCase();
+
+// ─── Password with basic complexity (Step 7) ───
+const passwordSchema = z
+  .string()
+  .min(8, "Password must be at least 8 characters long")
+  .max(128, "Password must be less than 128 characters")
+  .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+  .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+  .regex(/[0-9]/, "Password must contain at least one number")
+  .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character")
+  .trim();
+
 export const shopAddressValidationSchema = z.object({
   street: z.string().min(1, "Street is required"),
   city: z.string().min(1, "City is required"),
@@ -22,17 +37,13 @@ const registerRequestValidationSchema = z.object({
   body: z.object({
     firstName: z.string().min(1, "First name is required"),
     lastName: z.string().min(1, "Last name is required"),
-    email: z.email().min(1, "Email is required"),
-    role: z.enum(["SUPER_ADMIN", "ADMIN", "MODERATOR", "VENDOR", "CUSTOMER"]),
-    password: z
-      .string()
-      .min(6, "Password must be at least 6 characters long")
-      .max(20, { error: "Password must be less than 20 characters" })
-      .trim(),
+    email: emailSchema,
+    role: z.enum(["SUPER_ADMIN", "ADMIN", "VENDOR", "CUSTOMER"]),
+    password: passwordSchema,
     shopData: z
       .object({
         shopName: z.string().min(1, "Shop name is required"),
-        shopEmail: z.email(),
+        shopEmail: emailSchema,
         shopPhone: z
           .string()
           .min(7, "Shop phone must be at least 7 digits")
@@ -45,7 +56,7 @@ const registerRequestValidationSchema = z.object({
 
 const verifyRegistrationValidationSchema = z.object({
   body: z.object({
-    email: z.email().min(1, "Email is required"),
+    email: emailSchema,
     otp: z
       .string()
       .length(6, "OTP must be exactly 6 digits")
@@ -55,7 +66,40 @@ const verifyRegistrationValidationSchema = z.object({
 
 const resendOtpValidationSchema = z.object({
   body: z.object({
-    email: z.email().min(1, "Email is required"),
+    email: emailSchema,
+  }),
+});
+
+const loginValidationSchema = z.object({
+  body: z.object({
+    email: emailSchema,
+    password: passwordSchema,
+  }),
+});
+
+const refreshTokenValidationSchema = z.object({
+  body: z.object({
+    refreshToken: z.string().min(1, "Refresh token is required"),
+  }),
+});
+
+const logoutValidationSchema = z.object({
+  body: z.object({
+    refreshToken: z.string().min(1, "Refresh token is required"),
+  }),
+});
+
+// ─── Step 6: Password Reset ───
+const requestPasswordResetValidationSchema = z.object({
+  body: z.object({
+    email: emailSchema,
+  }),
+});
+
+const verifyPasswordResetValidationSchema = z.object({
+  body: z.object({
+    resetToken: z.string().min(1, "Reset token is required"),
+    newPassword: passwordSchema,
   }),
 });
 
@@ -63,4 +107,9 @@ export const AuthValidation = {
   registerRequestValidationSchema,
   verifyRegistrationValidationSchema,
   resendOtpValidationSchema,
+  loginValidationSchema,
+  refreshTokenValidationSchema,
+  logoutValidationSchema,
+  requestPasswordResetValidationSchema,
+  verifyPasswordResetValidationSchema,
 };

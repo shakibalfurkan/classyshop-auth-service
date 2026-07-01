@@ -1,6 +1,6 @@
 import { Redis } from "ioredis";
 import config from "./index.js";
-import { logger } from "../utils/logger.js";
+import logger from "../utils/logger.js";
 
 export const redisClient = new Redis(config.redis_database_url!, {
   retryStrategy(times) {
@@ -19,5 +19,5 @@ redisClient.on("error", (err) => {
 });
 
 redisClient.on("ready", () => {
-  logger.info("🚀 Redis Engine (ioredis) connected and operational.");
+  logger.info("Redis Engine (ioredis) connected and operational.");
 });
