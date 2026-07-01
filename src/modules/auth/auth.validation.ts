@@ -76,18 +76,6 @@ const loginValidationSchema = z.object({
   }),
 });
 
-const refreshTokenValidationSchema = z.object({
-  body: z.object({
-    refreshToken: z.string().min(1, "Refresh token is required"),
-  }),
-});
-
-const logoutValidationSchema = z.object({
-  body: z.object({
-    refreshToken: z.string().min(1, "Refresh token is required"),
-  }),
-});
-
 const requestPasswordResetValidationSchema = z.object({
   body: z.object({
     email: emailSchema,
@@ -106,8 +94,6 @@ export const AuthValidation = {
   verifyRegistrationValidationSchema,
   resendOtpValidationSchema,
   loginValidationSchema,
-  refreshTokenValidationSchema,
-  logoutValidationSchema,
   requestPasswordResetValidationSchema,
   verifyPasswordResetValidationSchema,
 };

@@ -92,9 +92,42 @@ const login = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const refreshToken = catchAsync(async (req: Request, res: Response) => {
+  const token = req.cookies?.refreshToken || req.body.refreshToken;
+
+  const result = await AuthService.refreshToken(token);
+
+  const isCustomer = result.role === UserRoles.CUSTOMER;
+
+  if (!isCustomer) {
+    setCookie(res, "accessToken", result.accessToken!, 60 * 60 * 1000);
+    setCookie(
+      res,
+      "refreshToken",
+      result.refreshToken!,
+      7 * 24 * 60 * 60 * 1000,
+    );
+  }
+
+  const responseData = {
+    ...(result.accessToken &&
+      isCustomer && { accessToken: result.accessToken }),
+    ...(result.refreshToken &&
+      isCustomer && { refreshToken: result.refreshToken }),
+  };
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Token refreshed successfully",
+    data: responseData,
+  });
+});
+
 export const AuthController = {
   registerRequest,
   verifyRegistration,
   resendOtp,
   login,
+  refreshToken,
 };

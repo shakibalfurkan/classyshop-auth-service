@@ -384,6 +384,7 @@ const refreshToken = async (token: string): Promise<ITokenRefreshResult> => {
   return {
     accessToken,
     refreshToken: newRefreshToken,
+    role: storedToken.credential.role,
   };
 };
 

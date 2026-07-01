@@ -23,4 +23,5 @@ export interface ILoginResult {
 export interface ITokenRefreshResult {
   accessToken: string;
   refreshToken: string;
+  role: UserRoles;
 }
