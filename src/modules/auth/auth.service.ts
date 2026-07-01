@@ -429,6 +429,45 @@ const requestPasswordReset = async (email: string): Promise<void> => {
   });
 };
 
+const verifyPasswordReset = async (payload: {
+  resetToken: string;
+  newPassword: string;
+}): Promise<void> => {
+  const { resetToken, newPassword } = payload;
+
+  const resetRecord = await prisma.passwordReset.findUnique({
+    where: { resetToken },
+  });
+
+  if (!resetRecord) {
+    throw new BadRequestError("Invalid or expired reset token");
+  }
+
+  if (resetRecord.usedAt) {
+    throw new BadRequestError("Reset token has already been used");
+  }
+
+  if (resetRecord.expiresAt < new Date()) {
+    throw new BadRequestError("Reset token has expired");
+  }
+
+  const hashedPassword = await hashPassword(
+    newPassword,
+    config.bcrypt_salt_round,
+  );
+
+  await prisma.$transaction([
+    prisma.credential.update({
+      where: { id: resetRecord.credentialId },
+      data: { password: hashedPassword },
+    }),
+    prisma.passwordReset.update({
+      where: { id: resetRecord.id },
+      data: { usedAt: new Date() },
+    }),
+  ]);
+};
+
 export const AuthService = {
   registerRequest,
   verifyRegistration,
@@ -437,4 +476,5 @@ export const AuthService = {
   refreshToken,
   logout,
   requestPasswordReset,
+  verifyPasswordReset,
 };
