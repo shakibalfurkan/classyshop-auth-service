@@ -28,19 +28,18 @@ const verifyRegistration = catchAsync(async (req: Request, res: Response) => {
       otp,
     })) as IRegistrationResult;
 
-  if (user.role !== UserRoles.CUSTOMER) {
+  const isCustomer = user.role === UserRoles.CUSTOMER;
+
+  if (!isCustomer) {
     setCookie(res, "accessToken", accessToken!, 60 * 60 * 1000);
-    setCookie(res, "refreshToken", refreshToken!);
+    setCookie(res, "refreshToken", refreshToken!, 7 * 24 * 60 * 60 * 1000);
   }
 
   const result: IRegistrationResult = {
     user,
+    ...(accessToken && isCustomer && { accessToken }),
+    ...(refreshToken && isCustomer && { refreshToken }),
   };
-
-  if (user.role === UserRoles.CUSTOMER) {
-    result.accessToken = accessToken!;
-    result.refreshToken = refreshToken!;
-  }
 
   sendResponse(res, {
     statusCode: 201,
@@ -62,8 +61,40 @@ const resendOtp = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const login = catchAsync(async (req: Request, res: Response) => {
+  const result = (await AuthService.login(req.body)) as ILoginResult;
+
+  const isCustomer = result.user.role === UserRoles.CUSTOMER;
+
+  if (!isCustomer) {
+    setCookie(res, "accessToken", result.accessToken!, 60 * 60 * 1000);
+    setCookie(
+      res,
+      "refreshToken",
+      result.refreshToken!,
+      7 * 24 * 60 * 60 * 1000,
+    );
+  }
+
+  const responseData: ILoginResult = {
+    user: result.user,
+    ...(result.accessToken &&
+      isCustomer && { accessToken: result.accessToken }),
+    ...(result.refreshToken &&
+      isCustomer && { refreshToken: result.refreshToken }),
+  };
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Login successful",
+    data: responseData,
+  });
+});
+
 export const AuthController = {
   registerRequest,
   verifyRegistration,
   resendOtp,
+  login,
 };

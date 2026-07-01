@@ -9,3 +9,18 @@ export interface IRegistrationResult {
   accessToken?: string;
   refreshToken?: string;
 }
+
+export interface ILoginResult {
+  user: {
+    id: string;
+    email: string;
+    role: UserRoles;
+  };
+  accessToken?: string;
+  refreshToken?: string;
+}
+
+export interface ITokenRefreshResult {
+  accessToken: string;
+  refreshToken: string;
+}

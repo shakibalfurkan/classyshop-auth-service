@@ -9,13 +9,10 @@ export const setCookie = (
 ) => {
   const isProd = config.node_env === "production";
 
-  const sameSitePolicy =
-    tokenName === "accessToken" ? ("strict" as const) : ("none" as const);
-
   const cookieOptions: Record<string, unknown> = {
     httpOnly: true,
     secure: isProd,
-    sameSite: isProd ? sameSitePolicy : "lax",
+    sameSite: isProd ? "none" : "lax",
     maxAge,
     path: "/",
     priority: "high",
