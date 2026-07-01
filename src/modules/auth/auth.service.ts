@@ -349,9 +349,53 @@ const login = async (payload: {
   };
 };
 
+const refreshToken = async (token: string): Promise<ITokenRefreshResult> => {
+  const storedToken = await prisma.refreshToken.findUnique({
+    where: { token },
+    include: { credential: true },
+  });
+
+  if (!storedToken) {
+    throw new UnauthorizedError("Invalid refresh token");
+  }
+
+  if (storedToken.isRevoked) {
+    await revokeTokenFamily(storedToken.familyId);
+    logger.warn(
+      `[RTR] Token reuse detected — revoked family ${storedToken.familyId} for credential ${storedToken.credentialId}`,
+    );
+    throw new UnauthorizedError("Refresh token has been revoked");
+  }
+
+  if (storedToken.expiresAt < new Date()) {
+    await revokeRefreshToken(token);
+    throw new UnauthorizedError("Refresh token has expired");
+  }
+
+  await revokeRefreshToken(token);
+
+  const jwtPayload = buildJwtPayload(storedToken.credential);
+  const accessToken = issueAccessToken(jwtPayload);
+  const { token: newRefreshToken } = await issueRefreshToken(
+    storedToken.credentialId,
+    storedToken.familyId,
+  );
+
+  return {
+    accessToken,
+    refreshToken: newRefreshToken,
+  };
+};
+
+const logout = async (token: string): Promise<void> => {
+  await revokeRefreshToken(token);
+};
+
 export const AuthService = {
   registerRequest,
   verifyRegistration,
   resendOtp,
   login,
+  refreshToken,
+  logout,
 };
