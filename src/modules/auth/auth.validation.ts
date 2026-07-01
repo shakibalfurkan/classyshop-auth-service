@@ -3,7 +3,6 @@ import z from "zod";
 // ─── Shared email schema ───
 const emailSchema = z.email().trim().toLowerCase();
 
-// ─── Password with basic complexity (Step 7) ───
 const passwordSchema = z
   .string()
   .min(8, "Password must be at least 8 characters long")
@@ -89,7 +88,6 @@ const logoutValidationSchema = z.object({
   }),
 });
 
-// ─── Step 6: Password Reset ───
 const requestPasswordResetValidationSchema = z.object({
   body: z.object({
     email: emailSchema,

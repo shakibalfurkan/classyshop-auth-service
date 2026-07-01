@@ -24,7 +24,11 @@ import trackOtpRequests from "../../utils/otpHandlers/trackOtpRequests.js";
 import { UserRoles } from "../../generated/prisma/enums.js";
 import createInternalSignature from "../../utils/createInternalSignature.js";
 import { JwtHelpers } from "../../utils/jwtHelpers.js";
-
+import type {
+  ILoginResult,
+  IRegistrationResult,
+  ITokenRefreshResult,
+} from "./auth.interface.js";
 import { createUserProfile } from "../../lib/axiosClients/userServiceClient.js";
 
 // ─── Constants ───
@@ -299,8 +303,55 @@ const resendOtp = async (email: string) => {
   return null;
 };
 
+const login = async (payload: {
+  email: string;
+  password: string;
+}): Promise<ILoginResult> => {
+  const { email, password } = payload;
+
+  const credential = await prisma.credential.findUnique({
+    where: { email },
+  });
+
+  if (!credential) {
+    throw new UnauthorizedError("Invalid email or password");
+  }
+
+  if (!credential.isActive) {
+    throw new UnauthorizedError("Account is deactivated");
+  }
+
+  checkLockout(credential);
+
+  const isPasswordValid = await isPasswordMatched(
+    password,
+    credential.password,
+  );
+  if (!isPasswordValid) {
+    await handleFailedLogin(credential.id);
+    throw new UnauthorizedError("Invalid email or password");
+  }
+
+  await resetLoginAttempts(credential.id);
+
+  const jwtPayload = buildJwtPayload(credential);
+  const accessToken = issueAccessToken(jwtPayload);
+  const { token: refreshToken } = await issueRefreshToken(credential.id);
+
+  return {
+    user: {
+      id: credential.id,
+      email: credential.email,
+      role: credential.role,
+    },
+    accessToken,
+    refreshToken,
+  };
+};
+
 export const AuthService = {
   registerRequest,
   verifyRegistration,
   resendOtp,
+  login,
 };
