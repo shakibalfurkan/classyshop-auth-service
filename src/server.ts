@@ -53,10 +53,13 @@ const shutdown = async (signal: string) => {
 
   // Stop accepting new connections
   if (server) {
+    if (signal === "uncaughtException") {
+      server.closeAllConnections();
+    }
+
     server.close(async () => {
       logger.info("HTTP server closed.");
 
-      // Disconnect downstream services in parallel
       await Promise.allSettled([
         redisClient.quit(),
         producer ? producer.disconnect() : Promise.resolve(),
@@ -78,7 +81,6 @@ const shutdown = async (signal: string) => {
 process.on("SIGTERM", () => shutdown("SIGTERM"));
 process.on("SIGINT", () => shutdown("SIGINT"));
 
-// Handle uncaught errors
 process.on("uncaughtException", (err) => {
   logger.error("Uncaught exception:", err);
   shutdown("uncaughtException");

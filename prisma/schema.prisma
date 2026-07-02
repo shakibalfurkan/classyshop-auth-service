@@ -81,6 +81,6 @@ enum DeletionType {
 enum UserRoles {
   SUPER_ADMIN
   ADMIN
-  VENDOR
+  SELLER
   CUSTOMER
 }

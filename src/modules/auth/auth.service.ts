@@ -70,7 +70,7 @@ const registerRequest = async (payload: TRegisterRequest) => {
     firstName,
     lastName,
   };
-  if (role === UserRoles.VENDOR && shopData) {
+  if (role === UserRoles.SELLER && shopData) {
     registrationData.shopData = shopData;
   }
 
