@@ -17,134 +17,33 @@ import {
   KafkaTopics,
   NotificationEventTypes,
 } from "../../events/event-types.js";
-import verifyOtp from "../../utils/otpHandlers/verifyOtp.js";
+import verifyOtp from "../../utils/otp/verifyOtp.js";
 import logger from "../../utils/logger.js";
-import checkOtpRestrictions from "../../utils/otpHandlers/checkOtpRestrictions.js";
-import trackOtpRequests from "../../utils/otpHandlers/trackOtpRequests.js";
+import checkOtpRestrictions from "../../utils/otp/checkOtpRestrictions.js";
+import trackOtpRequests from "../../utils/otp/trackOtpRequests.js";
 import { UserRoles } from "../../generated/prisma/enums.js";
 import createInternalSignature from "../../utils/createInternalSignature.js";
-import { JwtHelpers } from "../../utils/jwtHelpers.js";
 import type {
   ILoginResult,
   IRegistrationResult,
   ITokenRefreshResult,
 } from "./auth.interface.js";
 import { createUserProfile } from "../../lib/axiosClients/userServiceClient.js";
-
-// ─── Constants ───
-const MAX_LOGIN_ATTEMPTS = 5;
-const LOCK_DURATION_MS = 15 * 60 * 1000;
-const REFRESH_TOKEN_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000;
-
-// ─── Helpers ───
-
-/** Generate a cryptographically random token string. */
-function generateTokenString(): string {
-  return crypto.randomBytes(64).toString("hex");
-}
-
-/** Build the JWT payload for a credential. */
-function buildJwtPayload(credential: {
-  id: string;
-  email: string;
-  role: string;
-}) {
-  return { id: credential.id, role: credential.role, email: credential.email };
-}
-
-/** Issue an access token. */
-function issueAccessToken(payload: ReturnType<typeof buildJwtPayload>): string {
-  return JwtHelpers.generateToken(
-    { ...payload, tokenType: "access" },
-    config.jwt.access_token_secret,
-    config.jwt.access_token_expires_in,
-  );
-}
-
-/** Issue a refresh token (opaque, stored in DB). */
-async function issueRefreshToken(
-  credentialId: string,
-  familyId?: string,
-): Promise<{ token: string; familyId: string }> {
-  const token = generateTokenString();
-  const family = familyId ?? crypto.randomUUID();
-
-  await prisma.refreshToken.create({
-    data: {
-      token,
-      credentialId,
-      familyId: family,
-      expiresAt: new Date(Date.now() + REFRESH_TOKEN_EXPIRY_MS),
-    },
-  });
-
-  return { token, familyId: family };
-}
-
-/** Revoke all refresh tokens in a family (used during rotation). */
-async function revokeTokenFamily(familyId: string): Promise<void> {
-  await prisma.refreshToken.updateMany({
-    where: { familyId, isRevoked: false },
-    data: { isRevoked: true },
-  });
-}
-
-/** Revoke a specific refresh token (used during logout). */
-async function revokeRefreshToken(token: string): Promise<void> {
-  await prisma.refreshToken.updateMany({
-    where: { token, isRevoked: false },
-    data: { isRevoked: true },
-  });
-}
-
-/** Check if a credential is locked due to too many failed login attempts. */
-function checkLockout(credential: {
-  failedLoginAttempts: number;
-  lockedUntil: Date | null;
-}): void {
-  if (credential.lockedUntil && credential.lockedUntil > new Date()) {
-    const remainingMs = credential.lockedUntil.getTime() - Date.now();
-    const remainingMin = Math.ceil(remainingMs / 60000);
-    throw new UnauthorizedError(
-      `Account temporarily locked. Try again in ${remainingMin} minute(s).`,
-    );
-  }
-}
-
-/** Increment failed login attempts and lock if threshold exceeded. */
-async function handleFailedLogin(credentialId: string): Promise<void> {
-  // First increment the counter
-  const updated = await prisma.credential.update({
-    where: { id: credentialId },
-    data: {
-      failedLoginAttempts: { increment: 1 },
-    },
-  });
-
-  // If threshold reached, lock the account
-  if (updated.failedLoginAttempts >= MAX_LOGIN_ATTEMPTS) {
-    await prisma.credential.update({
-      where: { id: credentialId },
-      data: {
-        lockedUntil: new Date(Date.now() + LOCK_DURATION_MS),
-      },
-    });
-  }
-}
-
-/** Reset failed login counters on successful login. */
-async function resetLoginAttempts(credentialId: string): Promise<void> {
-  await prisma.credential.update({
-    where: { id: credentialId },
-    data: {
-      failedLoginAttempts: 0,
-      lockedUntil: null,
-      lastLogin: new Date(),
-    },
-  });
-}
-
-// ─── Public Service Methods ───
+import { buildJwtPayload } from "../../utils/token/buildJwtPayload.js";
+import {
+  issueAccessToken,
+  issueRefreshToken,
+} from "../../utils/token/issueToken.js";
+import {
+  checkLockout,
+  handleFailedLogin,
+  resetLoginAttempts,
+} from "../../utils/handleLogin.js";
+import {
+  revokeRefreshToken,
+  revokeTokenFamily,
+} from "../../utils/token/revokeToken.js";
+import { generateToken } from "../../utils/token/generateToken.js";
 
 const registerRequest = async (payload: TRegisterRequest) => {
   const { email, password, role, firstName, lastName, shopData } = payload;
@@ -251,7 +150,10 @@ const verifyRegistration = async (
   const jwtPayload = buildJwtPayload(credential);
 
   const accessToken = issueAccessToken(jwtPayload);
-  const { token: refreshToken } = await issueRefreshToken(credential.id);
+  const { token: refreshToken } = await issueRefreshToken(
+    jwtPayload,
+    credential.id,
+  );
 
   const result: IRegistrationResult = {
     user: {
@@ -335,8 +237,12 @@ const login = async (payload: {
   await resetLoginAttempts(credential.id);
 
   const jwtPayload = buildJwtPayload(credential);
+
   const accessToken = issueAccessToken(jwtPayload);
-  const { token: refreshToken } = await issueRefreshToken(credential.id);
+  const { token: refreshToken } = await issueRefreshToken(
+    jwtPayload,
+    credential.id,
+  );
 
   return {
     user: {
@@ -377,6 +283,7 @@ const refreshToken = async (token: string): Promise<ITokenRefreshResult> => {
   const jwtPayload = buildJwtPayload(storedToken.credential);
   const accessToken = issueAccessToken(jwtPayload);
   const { token: newRefreshToken } = await issueRefreshToken(
+    jwtPayload,
     storedToken.credentialId,
     storedToken.familyId,
   );
@@ -401,7 +308,7 @@ const requestPasswordReset = async (email: string): Promise<void> => {
     return;
   }
 
-  const resetToken = JwtHelpers.generateToken(
+  const resetToken = generateToken(
     {
       id: credential.id,
       role: credential.role,

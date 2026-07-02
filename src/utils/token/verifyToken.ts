@@ -1,30 +1,15 @@
 import jwt, { type JwtPayload } from "jsonwebtoken";
+import type { ITokenPayload } from "./generateToken.js";
 import {
-  AppError,
+  BadRequestError,
   ForbiddenError,
   UnauthorizedError,
-} from "../errors/AppError.js";
-
-export interface ITokenPayload {
-  id: string;
-  role: string;
-  email: string;
-  tokenType?: "access" | "refresh" | "reset";
-}
+} from "../../errors/AppError.js";
 
 export interface IDecodedToken extends ITokenPayload, JwtPayload {
   iat: number;
   exp: number;
 }
-
-const generateToken = (
-  jwtPayload: ITokenPayload,
-  secret: string,
-  expiresIn: string,
-): string => {
-  const token = jwt.sign(jwtPayload, secret, { expiresIn } as jwt.SignOptions);
-  return token;
-};
 
 const verifyToken = (
   token: string,
@@ -36,7 +21,7 @@ const verifyToken = (
   }
 
   if (!secret) {
-    throw new AppError(400, "JWT secret is not configured");
+    throw new BadRequestError("JWT secret is not configured");
   }
 
   try {
@@ -56,7 +41,4 @@ const verifyToken = (
   }
 };
 
-export const JwtHelpers = {
-  generateToken,
-  verifyToken,
-};
+export default verifyToken;
