@@ -3,7 +3,7 @@ import { createApp } from "./app.js";
 import config from "./config/index.js";
 import { redisClient } from "./config/redis.js";
 import { producer } from "./config/kafka.js";
-import { disconnectPrisma } from "./lib/prisma.js";
+import { disconnectPrisma, prisma } from "./lib/prisma.js";
 import logger from "./utils/logger.js";
 
 let server: Server;
@@ -13,16 +13,13 @@ async function main(): Promise<void> {
     // Create app
     const app = createApp();
 
+    // Verify Prisma connection
+    await prisma.$connect();
+    logger.info("Prisma connected to database.");
+
     // Verify Redis connection
-    try {
-      await redisClient.ping();
-      logger.info("Redis Database handshake verified successfully.");
-    } catch (redisError) {
-      logger.warn(
-        "Redis connection failed. Rate limiting will fall back to in-memory store.",
-        redisError,
-      );
-    }
+    await redisClient.ping();
+    logger.info("Redis Database handshake verified successfully.");
 
     // Connect Kafka producer once at startup — not on every publish
     if (producer) {
