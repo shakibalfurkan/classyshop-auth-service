@@ -6,16 +6,22 @@ import logger from "../utils/logger.js";
 interface RateLimiterOptions {
   windowSeconds?: number;
   maxRequests?: number;
+  route: string;
   prefix?: string;
 }
 
 const inMemoryStore = new Map<string, { count: number; resetAt: number }>();
 
-export function rateLimiter(opts: RateLimiterOptions = {}) {
-  const { windowSeconds = 60, maxRequests = 10, prefix = "auth:rl" } = opts;
+export function rateLimiter(opts: RateLimiterOptions) {
+  const {
+    windowSeconds = 60,
+    maxRequests = 10,
+    prefix = "auth:rl",
+    route,
+  } = opts;
 
   return async (req: Request, _res: Response, next: NextFunction) => {
-    const key = `${prefix}:${req.ip ?? "unknown"}`;
+    const key = `${prefix}:${route}:${req.headers["x-forwarded-for"] ?? "unknown"}`;
     const now = Date.now();
 
     try {

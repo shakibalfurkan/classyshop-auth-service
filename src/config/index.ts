@@ -30,7 +30,7 @@ validateEnvVars();
 const config = {
   node_env: process.env.NODE_ENV ?? "development",
   serviceName: process.env.SERVICE_NAME ?? "auth-service",
-  port: Number(process.env.PORT) || 5001,
+  port: Number(process.env.PORT) || 5000,
 
   redis_database_url: process.env.REDIS_DATABASE_URL!,
 
@@ -51,7 +51,7 @@ const config = {
 
   bcrypt_salt_round: Number(process.env.BCRYPT_SALT_ROUND) || 12,
 
-  user_service_url: process.env.USER_SERVICE_URL ?? "http://localhost:5003",
+  user_service_url: process.env.USER_SERVICE_URL ?? "http://localhost:5001",
   internal_service_secret: process.env.INTERNAL_SERVICE_SECRET!,
 
   allowed_origins:
@@ -60,6 +60,7 @@ const config = {
 
   user_client_url: process.env.USER_CLIENT_URL ?? "http://localhost:3000",
   seller_client_url: process.env.SELLER_CLIENT_URL ?? "http://localhost:5173",
+  admin_client_url: process.env.ADMIN_CLIENT_URL ?? "http://localhost:5174",
 } as const;
 
 export default config;

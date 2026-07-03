@@ -49,32 +49,48 @@ async function main(): Promise<void> {
 
 // ─── Graceful Shutdown
 const shutdown = async (signal: string) => {
-  logger.info(`${signal} received. Starting graceful shutdown...`);
+  logger.info(`${signal} received. Starting graceful shutdown sequence...`);
 
-  // Stop accepting new connections
-  if (server) {
-    if (signal === "uncaughtException") {
+  const watchdog = setTimeout(() => {
+    logger.error(
+      `Forced shutdown executed. Graceful cleanup timed out after 10s.`,
+    );
+    process.exit(1);
+  }, 10_000);
+
+  watchdog.unref();
+
+  try {
+    if (server) {
+      logger.info("Severing active HTTP connections and stopping listener...");
+
       server.closeAllConnections();
+
+      await new Promise<void>((resolve) => {
+        server.close(() => {
+          logger.info("HTTP server listener closed successfully.");
+          resolve();
+        });
+      });
     }
 
-    server.close(async () => {
-      logger.info("HTTP server closed.");
+    logger.info("Closing stateful infrastructure channels...");
+    await Promise.allSettled([
+      redisClient.quit(),
+      producer ? producer.disconnect() : Promise.resolve(),
+      disconnectPrisma(),
+    ]);
 
-      await Promise.allSettled([
-        redisClient.quit(),
-        producer ? producer.disconnect() : Promise.resolve(),
-        disconnectPrisma(),
-      ]);
-
-      logger.info("Graceful shutdown complete. Exiting.");
-      process.exit(0);
-    });
-
-    // Force shutdown after 10 seconds
-    setTimeout(() => {
-      logger.error("Forced shutdown after timeout.");
-      process.exit(1);
-    }, 10_000).unref();
+    logger.info(
+      "All stateful connections closed cleanly. Graceful exit success.",
+    );
+    process.exit(0);
+  } catch (error) {
+    logger.error(
+      "An error occurred during the graceful shutdown sequence:",
+      error,
+    );
+    process.exit(1);
   }
 };
 

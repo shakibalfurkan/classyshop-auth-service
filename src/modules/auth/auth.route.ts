@@ -8,7 +8,11 @@ const router: Router = Router();
 
 router.post(
   "/register-request",
-  rateLimiter({ maxRequests: 3, windowSeconds: 300 }),
+  rateLimiter({
+    maxRequests: 3,
+    windowSeconds: 300,
+    route: "register-request",
+  }),
   validateRequest(AuthValidation.registerRequestValidationSchema),
   AuthController.registerRequest,
 );
@@ -21,14 +25,22 @@ router.post(
 
 router.post(
   "/resend-otp",
-  rateLimiter({ maxRequests: 3, windowSeconds: 120 }),
+  rateLimiter({
+    maxRequests: 3,
+    windowSeconds: 120,
+    route: "resend-otp",
+  }),
   validateRequest(AuthValidation.resendOtpValidationSchema),
   AuthController.resendOtp,
 );
 
 router.post(
   "/login",
-  rateLimiter({ maxRequests: 5, windowSeconds: 60 }),
+  rateLimiter({
+    maxRequests: 5,
+    windowSeconds: 60,
+    route: "login",
+  }),
   validateRequest(AuthValidation.loginValidationSchema),
   AuthController.login,
 );
@@ -39,14 +51,22 @@ router.post("/logout", AuthController.logout);
 
 router.post(
   "/forgot-password",
-  rateLimiter({ maxRequests: 3, windowSeconds: 300 }),
+  rateLimiter({
+    maxRequests: 3,
+    windowSeconds: 300,
+    route: "forgot-password",
+  }),
   validateRequest(AuthValidation.requestPasswordResetValidationSchema),
   AuthController.requestPasswordReset,
 );
 
 router.post(
   "/reset-password",
-  rateLimiter({ maxRequests: 3, windowSeconds: 300 }),
+  rateLimiter({
+    maxRequests: 3,
+    windowSeconds: 300,
+    route: "reset-password",
+  }),
   validateRequest(AuthValidation.verifyPasswordResetValidationSchema),
   AuthController.verifyPasswordReset,
 );
