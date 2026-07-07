@@ -21,7 +21,7 @@ async function main(): Promise<void> {
     await redisClient.ping();
     logger.info("Redis Database handshake verified successfully.");
 
-    // Connect Kafka producer once at startup — not on every publish
+    // Connect Kafka producer once at startup
     if (producer) {
       await producer.connect();
       logger.info("Kafka producer connected successfully.");

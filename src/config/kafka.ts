@@ -4,6 +4,14 @@ import logger from "../utils/logger.js";
 
 const { broker, username, password } = config.kafka;
 
+export const KafkaTopics = {
+  DOMAIN_EVENTS: "domain-events",
+  COMMANDS: "commands",
+  NOTIFICATIONS: "notifications",
+  ANALYTICS: "analytics-events",
+  DLQ: "dead-letter-queue",
+} as const;
+
 let kafka: Kafka | null = null;
 let producer: ReturnType<Kafka["producer"]> | null = null;
 

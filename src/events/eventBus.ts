@@ -1,9 +1,14 @@
 import { kafka, producer } from "../config/kafka.js";
 import logger from "../utils/logger.js";
-import { KafkaTopics } from "./event-types.js";
+import type { KafkaTopics } from "../config/kafka.js";
 
 export const EventBus = {
-  publish: async (topic: KafkaTopics, message: any) => {
+  publish: async (
+    topic: (typeof KafkaTopics)[keyof typeof KafkaTopics],
+    eventId: string,
+    message: unknown,
+    traceparent?: string,
+  ) => {
     try {
       if (!producer) {
         logger.warn(
@@ -13,7 +18,13 @@ export const EventBus = {
       }
       await producer.send({
         topic,
-        messages: [{ value: JSON.stringify(message) }],
+        messages: [
+          {
+            key: eventId,
+            value: JSON.stringify(message),
+            headers: traceparent ? { traceparent } : {},
+          },
+        ],
       });
       logger.info(`[EventBus] 🚀 Sent to ${topic}`);
     } catch (error) {
@@ -22,7 +33,7 @@ export const EventBus = {
   },
 
   subscribe: async (
-    topic: KafkaTopics,
+    topic: (typeof KafkaTopics)[keyof typeof KafkaTopics],
     groupId: string,
     handler: (data: any) => Promise<void>,
   ) => {

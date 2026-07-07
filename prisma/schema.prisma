@@ -13,24 +13,25 @@ model Credential {
   password String
   role     UserRoles @default(CUSTOMER)
 
-  isActive Boolean @default(true)
-
-  isBlocked    Boolean   @default(false)
-  blockedAt    DateTime?
-  blockReason  String?
-  blockedUntil DateTime?
-
+  // ---- Replicated from user-service via events. auth-service NEVER writes these directly;
+  // it only updates them when consuming a UserBlocked/UserUnblocked/UserDeleted/UserReactivated event ----
+  isActive         Boolean       @default(true)
+  isBlocked        Boolean       @default(false)
+  blockedUntil     DateTime?
   isDeleted        Boolean       @default(false)
   deletedAt        DateTime?
   canReactivate    Boolean       @default(true)
   deletionType     DeletionType?
   reactivateWithin DateTime?
+  syncedVersion    Int           @default(0)
 
+  // ---- auth-service OWNS and WRITES these outright: pure security/session concerns ----
   lastLogin           DateTime?
   failedLoginAttempts Int       @default(0)
   lockedUntil         DateTime?
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   refreshTokens  RefreshToken[]
   passwordResets PasswordReset[]

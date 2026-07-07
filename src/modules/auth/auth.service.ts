@@ -12,11 +12,11 @@ import {
   isPasswordMatched,
 } from "../../utils/passwordHandler.js";
 import { redisClient } from "../../config/redis.js";
-import { EventBus } from "../../events/event-bus.js";
+import { EventBus } from "../../events/eventBus.js";
 import {
   KafkaTopics,
   NotificationEventTypes,
-} from "../../events/event-types.js";
+} from "../../events/eventTypes.js";
 import verifyOtp from "../../utils/otp/verifyOtp.js";
 import logger from "../../utils/logger.js";
 import checkOtpRestrictions from "../../utils/otp/checkOtpRestrictions.js";
