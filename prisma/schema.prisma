@@ -74,6 +74,64 @@ model PasswordReset {
   @@map("password_resets")
 }
 
+model AuditLog {
+  id         String  @id @default(uuid())
+  actorId    String
+  action     String
+  targetId   String
+  targetType String
+  oldValues  Json?
+  newValues  Json?
+  diff       Json?
+  ipAddress  String?
+  userAgent  String?
+  metadata   Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([actorId])
+  @@index([targetId, targetType])
+  @@index([action, createdAt])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model OutboxEvent {
+  id          String  @id @default(uuid())
+  aggregateId String
+  eventType   String
+  payload     Json
+  traceparent String?
+
+  status      OutboxStatus @default(PENDING)
+  retryCount  Int          @default(0)
+  maxRetries  Int          @default(5)
+  lastError   String?
+  lockedAt    DateTime?
+  lockedBy    String?
+  processedAt DateTime?
+  createdAt   DateTime     @default(now())
+
+  @@index([status, lockedAt, createdAt], name: "idx_outbox_polling")
+  @@index([status, createdAt])
+  @@index([status, lockedAt])
+  @@index([aggregateId])
+  @@map("outbox_events")
+}
+
+model IdempotencyRecord {
+  id                 String   @id
+  key                String   @unique
+  responseStatusCode Int
+  responseBody       Json?
+  expiresAt          DateTime
+
+  createdAt DateTime @default(now())
+
+  @@index([expiresAt])
+  @@map("idempotency_records")
+}
+
 enum DeletionType {
   SOFT
   PERMANENT
@@ -84,4 +142,11 @@ enum UserRoles {
   ADMIN
   SELLER
   CUSTOMER
+}
+
+enum OutboxStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  DEAD
 }
