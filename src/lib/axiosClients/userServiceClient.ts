@@ -2,6 +2,7 @@ import axios, { type AxiosInstance, AxiosError } from "axios";
 import config from "../../config/index.js";
 import logger from "../../utils/logger.js";
 import { ServiceUnavailableError } from "../../errors/AppError.js";
+import { CircuitBreaker } from "../../cache/circuitBreaker.js";
 
 declare module "axios" {
   interface InternalAxiosRequestConfig {
@@ -124,44 +125,9 @@ userServiceClient.interceptors.response.use(
   },
 );
 
-// ─── Circuit Breaker ─────────────────────────────────────────────────────────
-
-const cb = {
-  state: "CLOSED" as "CLOSED" | "OPEN" | "HALF_OPEN",
-  failureCount: 0,
-  lastFailTime: 0,
-  THRESHOLD: 5,
-  RESET_MS: 60_000,
-};
-
-export const isCircuitOpen = (): boolean => {
-  if (cb.state !== "OPEN") return false;
-
-  // enough time has passed — move to HALF_OPEN to allow one probe request
-  if (Date.now() - cb.lastFailTime > cb.RESET_MS) {
-    cb.state = "HALF_OPEN";
-    cb.failureCount = 0;
-    logger.info("Circuit breaker → HALF_OPEN");
-    return false;
-  }
-
-  return true;
-};
-
-export const recordSuccess = (): void => {
-  cb.failureCount = 0;
-  cb.state = "CLOSED";
-};
-
-export const recordFailure = (): void => {
-  cb.failureCount++;
-  cb.lastFailTime = Date.now();
-
-  if (cb.failureCount >= cb.THRESHOLD) {
-    cb.state = "OPEN";
-    logger.error("Circuit breaker → OPEN", { failureCount: cb.failureCount });
-  }
-};
+const userServiceCircuitBreaker = new CircuitBreaker({
+  name: "UserServiceCircuitBreaker",
+});
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -173,24 +139,17 @@ export const internalHeaders = (signature: string, requestId: string) => ({
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
-export const createUserProfile = async (
+export const createUserProfile = userServiceCircuitBreaker.execute((async (
   requestBody: Record<string, unknown>,
   signature: string,
   requestId: string,
 ) => {
-  if (isCircuitOpen()) {
-    logger.error("Circuit open — skipping createUserProfile", { requestId });
-    throw new ServiceUnavailableError("User Service temporarily unavailable");
-  }
-
   try {
     const response = await userServiceClient.post(
       "/users/create-profile",
       requestBody,
       { headers: internalHeaders(signature, requestId) },
     );
-
-    recordSuccess();
 
     logger.info("User profile created", {
       requestId,
@@ -199,15 +158,16 @@ export const createUserProfile = async (
 
     return response.data;
   } catch (error) {
-    recordFailure();
-
     logger.error("Failed to create user profile", {
       requestId,
       error: error instanceof Error ? error.message : String(error),
     });
 
-    throw error;
+    throw new ServiceUnavailableError(
+      "Failed to create user profile. Please try again later.",
+      "userService",
+    );
   }
-};
+}) as unknown as () => Promise<unknown>);
 
 export default userServiceClient;
