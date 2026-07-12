@@ -5,6 +5,7 @@ import { redisClient } from "./config/redis.js";
 import { producer } from "./config/kafka.js";
 import { disconnectPrisma, prisma } from "./lib/prisma.js";
 import logger from "./utils/logger.js";
+import { startOutboxPoller } from "./events/outboxPoller.js";
 
 let server: Server;
 
@@ -25,9 +26,12 @@ async function main(): Promise<void> {
     if (producer) {
       await producer.connect();
       logger.info("Kafka producer connected successfully.");
+
+      // Start the outbox poller to process pending events
+      await startOutboxPoller();
     } else {
       logger.warn(
-        "Kafka credentials not configured — event publishing disabled.",
+        "Kafka credentials not configured — event publishing and outbox poller disabled.",
       );
     }
 

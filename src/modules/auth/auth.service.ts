@@ -13,10 +13,6 @@ import {
 } from "../../utils/passwordHandler.js";
 import { redisClient } from "../../config/redis.js";
 import { EventBus } from "../../events/eventBus.js";
-import {
-  KafkaTopics,
-  NotificationEventTypes,
-} from "../../events/eventTypes.js";
 import verifyOtp from "../../utils/otp/verifyOtp.js";
 import logger from "../../utils/logger.js";
 import checkOtpRestrictions from "../../utils/otp/checkOtpRestrictions.js";
@@ -78,16 +74,8 @@ const registerRequest = async (payload: TRegisterRequest) => {
   );
   await redisClient.setex(`auth:otp:${email}`, 5 * 60, otp);
 
-  await EventBus.publish(KafkaTopics.NOTIFICATIONS, {
-    eventType: NotificationEventTypes.AUTH_OTP,
-    source: config.serviceName,
-    payload: {
-      reason: "email-verification",
-      name: firstName,
-      email,
-      otp,
-    },
-  });
+  // ? TODO: Emit an event to send the OTP via email or SMS
+
   return null;
 };
 
@@ -162,15 +150,6 @@ const verifyRegistration = async (
     refreshToken,
   };
 
-  await EventBus.publish(KafkaTopics.NOTIFICATIONS, {
-    eventType: NotificationEventTypes.AUTH_REGISTERED,
-    source: config.serviceName,
-    payload: {
-      name: userData.firstName,
-      email,
-    },
-  });
-
   return result;
 };
 
@@ -188,16 +167,7 @@ const resendOtp = async (email: string) => {
 
   const { firstName } = JSON.parse(cachedData);
 
-  await EventBus.publish(KafkaTopics.NOTIFICATIONS, {
-    eventType: NotificationEventTypes.AUTH_OTP,
-    source: config.serviceName,
-    payload: {
-      reason: "email-verification",
-      firstName,
-      email,
-      otp,
-    },
-  });
+  // ? TODO: Emit an event to send the OTP via email or SMS
 
   return null;
 };
@@ -324,14 +294,7 @@ const requestPasswordReset = async (email: string): Promise<void> => {
     },
   });
 
-  await EventBus.publish(KafkaTopics.NOTIFICATIONS, {
-    eventType: NotificationEventTypes.AUTH_PASSWORD_RESET,
-    source: config.serviceName,
-    payload: {
-      email,
-      resetToken,
-    },
-  });
+  // ? TODO: Emit an event to send the password reset link via email
 };
 
 const verifyPasswordReset = async (payload: {
