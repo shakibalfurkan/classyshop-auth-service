@@ -20,12 +20,6 @@ export type TRegisterRequest = {
   email: string;
   role: UserRoles;
   password: string;
-  shopData?: {
-    shopName: string;
-    shopEmail: string;
-    shopPhone: string;
-    shopAddress: IShopAddress;
-  };
 };
 
 export type TLoginRequest = {

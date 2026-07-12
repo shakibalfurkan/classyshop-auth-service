@@ -9,7 +9,7 @@ const router: Router = Router();
 router.post(
   "/register-request",
   rateLimiter({
-    maxRequests: 3,
+    maxRequests: 5,
     windowSeconds: 300,
     route: "register-request",
   }),
@@ -25,11 +25,6 @@ router.post(
 
 router.post(
   "/resend-otp",
-  rateLimiter({
-    maxRequests: 3,
-    windowSeconds: 120,
-    route: "resend-otp",
-  }),
   validateRequest(AuthValidation.resendOtpValidationSchema),
   AuthController.resendOtp,
 );

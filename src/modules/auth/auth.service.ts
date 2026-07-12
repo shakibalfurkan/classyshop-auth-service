@@ -44,13 +44,13 @@ import {
   revokeTokenFamily,
 } from "../../utils/token/revokeToken.js";
 import { generateToken } from "../../utils/token/generateToken.js";
+import * as AuthRepository from "../../modules/auth/auth.repository.js";
 
 const registerRequest = async (payload: TRegisterRequest) => {
-  const { email, password, role, firstName, lastName, shopData } = payload;
+  const { email, password, role, firstName, lastName } = payload;
 
-  const existingUser = await prisma.credential.findUnique({
-    where: { email },
-  });
+  const existingUser =
+    await AuthRepository.existsByEmailIncludingDeleted(email);
 
   if (existingUser) {
     throw new BadRequestError("Email already in use", "email");
@@ -70,9 +70,6 @@ const registerRequest = async (payload: TRegisterRequest) => {
     firstName,
     lastName,
   };
-  if (role === UserRoles.SELLER && shopData) {
-    registrationData.shopData = shopData;
-  }
 
   await redisClient.setex(
     `auth:reg:${email}`,

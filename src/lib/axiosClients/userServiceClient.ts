@@ -139,35 +139,37 @@ export const internalHeaders = (signature: string, requestId: string) => ({
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
-export const createUserProfile = userServiceCircuitBreaker.execute((async (
+export const createUserProfile = async (
   requestBody: Record<string, unknown>,
   signature: string,
   requestId: string,
 ) => {
-  try {
-    const response = await userServiceClient.post(
-      "/users/create-profile",
-      requestBody,
-      { headers: internalHeaders(signature, requestId) },
-    );
+  userServiceCircuitBreaker.execute(async () => {
+    try {
+      const response = await userServiceClient.post(
+        "/users/create-profile",
+        requestBody,
+        { headers: internalHeaders(signature, requestId) },
+      );
 
-    logger.info("User profile created", {
-      requestId,
-      userId: response.data?.id,
-    });
+      logger.info("User profile created", {
+        requestId,
+        userId: response.data?.id,
+      });
 
-    return response.data;
-  } catch (error) {
-    logger.error("Failed to create user profile", {
-      requestId,
-      error: error instanceof Error ? error.message : String(error),
-    });
+      return response.data;
+    } catch (error) {
+      logger.error("Failed to create user profile", {
+        requestId,
+        error: error instanceof Error ? error.message : String(error),
+      });
 
-    throw new ServiceUnavailableError(
-      "Failed to create user profile. Please try again later.",
-      "userService",
-    );
-  }
-}) as unknown as () => Promise<unknown>);
+      throw new ServiceUnavailableError(
+        "Failed to create user profile. Please try again later.",
+        "userService",
+      );
+    }
+  });
+};
 
 export default userServiceClient;

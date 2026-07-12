@@ -39,17 +39,6 @@ const registerRequestValidationSchema = z.object({
     email: emailSchema,
     role: z.enum(["SUPER_ADMIN", "ADMIN", "VENDOR", "CUSTOMER"]),
     password: passwordSchema,
-    shopData: z
-      .object({
-        shopName: z.string().min(1, "Shop name is required"),
-        shopEmail: emailSchema,
-        shopPhone: z
-          .string()
-          .min(7, "Shop phone must be at least 7 digits")
-          .max(15, "Shop phone must be less than 15 digits"),
-        shopAddress: shopAddressValidationSchema,
-      })
-      .optional(),
   }),
 });
 
