@@ -1,7 +1,13 @@
+import type { UserRoles } from "../../generated/prisma/enums.js";
+
 export function buildJwtPayload(credential: {
   id: string;
   email: string;
-  role: string;
+  role: UserRoles[];
 }) {
-  return { id: credential.id, role: credential.role, email: credential.email };
+  return {
+    id: credential.id,
+    role: credential.role,
+    email: credential.email,
+  };
 }

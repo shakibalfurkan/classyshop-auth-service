@@ -1,7 +1,8 @@
 import { v4 as uuidv4 } from "uuid";
 import type { PrismaTransaction } from "../types/database.types.js";
-import type { TDomainEvent, TNotificationEvent } from "./eventTypes.js";
+import type { TDomainEvent } from "./eventTypes.js";
 import { KafkaTopics } from "../config/kafka.js";
+import { prisma } from "../lib/prisma.js";
 
 // ─── Topic Router ───
 const eventTopicMap: Record<
@@ -38,13 +39,15 @@ export function resolveTopic(eventName: string): string {
 // ─── Outbox Writer ───
 
 export async function writeOutboxEvent(
-  tx: PrismaTransaction,
-  event: TDomainEvent | TNotificationEvent,
+  event: TDomainEvent,
+  tx?: PrismaTransaction,
   traceparent?: string,
 ): Promise<string> {
   const id = uuidv4();
 
-  await tx.outboxEvent.create({
+  const prismaClient = tx ? tx : prisma;
+
+  await prismaClient.outboxEvent.create({
     data: {
       id,
       aggregateId: event.aggregateId,
@@ -61,17 +64,9 @@ export async function writeOutboxEvent(
 }
 
 export async function emitDomainEvent(
-  tx: PrismaTransaction,
   event: TDomainEvent,
+  tx?: PrismaTransaction,
   traceparent?: string,
 ): Promise<string> {
-  return writeOutboxEvent(tx, event, traceparent);
-}
-
-export async function emitNotificationEvent(
-  tx: PrismaTransaction,
-  event: TNotificationEvent,
-  traceparent?: string,
-): Promise<string> {
-  return writeOutboxEvent(tx, event, traceparent);
+  return writeOutboxEvent(event, tx, traceparent);
 }

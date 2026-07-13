@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import { v5 as uuidv5 } from "uuid";
 import config from "../../config/index.js";
 import {
   BadRequestError,
@@ -12,7 +13,6 @@ import {
   isPasswordMatched,
 } from "../../utils/passwordHandler.js";
 import { redisClient } from "../../config/redis.js";
-import { EventBus } from "../../events/eventBus.js";
 import verifyOtp from "../../utils/otp/verifyOtp.js";
 import logger from "../../utils/logger.js";
 import checkOtpRestrictions from "../../utils/otp/checkOtpRestrictions.js";
@@ -41,6 +41,13 @@ import {
 } from "../../utils/token/revokeToken.js";
 import { generateToken } from "../../utils/token/generateToken.js";
 import * as AuthRepository from "../../modules/auth/auth.repository.js";
+import { emitDomainEvent } from "../../events/outboxWriter.js";
+import {
+  DomainEventTypes,
+  createEventMetadata,
+} from "../../events/eventTypes.js";
+
+const DNS_NAMESPACE = "6ba7b810-9dad-11d1-80b4-00c04fd430c8";
 
 const registerRequest = async (payload: TRegisterRequest) => {
   const { email, password, role, firstName, lastName } = payload;
@@ -74,7 +81,18 @@ const registerRequest = async (payload: TRegisterRequest) => {
   );
   await redisClient.setex(`auth:otp:${email}`, 5 * 60, otp);
 
-  // ? TODO: Emit an event to send the OTP via email or SMS
+  const aggregateId = uuidv5(email, DNS_NAMESPACE);
+
+  await emitDomainEvent({
+    eventName: DomainEventTypes.EMAIL_VERIFICATION_OTP_SENT,
+    aggregateId,
+    payload: {
+      firstName,
+      email,
+      role,
+    },
+    metadata: createEventMetadata(),
+  });
 
   return null;
 };
@@ -165,9 +183,20 @@ const resendOtp = async (email: string) => {
   const otp = crypto.randomInt(100000, 999999).toString();
   await redisClient.setex(`auth:otp:${email}`, 5 * 60, otp);
 
-  const { firstName } = JSON.parse(cachedData);
+  const { firstName, role } = JSON.parse(cachedData);
 
-  // ? TODO: Emit an event to send the OTP via email or SMS
+  const aggregateId = uuidv5(email, DNS_NAMESPACE);
+
+  await emitDomainEvent({
+    eventName: DomainEventTypes.EMAIL_VERIFICATION_OTP_SENT,
+    aggregateId,
+    payload: {
+      firstName,
+      email,
+      role,
+    },
+    metadata: createEventMetadata(),
+  });
 
   return null;
 };
@@ -294,7 +323,16 @@ const requestPasswordReset = async (email: string): Promise<void> => {
     },
   });
 
-  // ? TODO: Emit an event to send the password reset link via email
+  await emitDomainEvent({
+    eventName: DomainEventTypes.PASSWORD_RESET_REQUESTED,
+    aggregateId: credential.id,
+    payload: {
+      email,
+      credentialId: credential.id,
+      resetToken,
+    },
+    metadata: createEventMetadata(),
+  });
 };
 
 const verifyPasswordReset = async (payload: {

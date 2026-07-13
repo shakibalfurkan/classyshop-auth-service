@@ -4,10 +4,22 @@ import { AuthService } from "./auth.service.js";
 import sendResponse from "../../utils/sendResponse.js";
 import { setCookie, clearCookie } from "../../utils/cookieHandler.js";
 import { UserRoles } from "../../generated/prisma/enums.js";
-import type { ILoginResult, IRegistrationResult } from "./auth.interface.js";
+import type {
+  ILoginResult,
+  IRegisterRequestDTO,
+  IRegistrationResult,
+} from "./auth.interface.js";
 
 const registerRequest = catchAsync(async (req: Request, res: Response) => {
-  const result = await AuthService.registerRequest(req.body);
+  const payload: IRegisterRequestDTO = {
+    firstName: req.body.profile.firstName,
+    lastName: req.body.profile.lastName,
+    email: req.body.email,
+    role: req.body.role,
+    password: req.body.password,
+  };
+
+  const result = await AuthService.registerRequest(payload);
 
   sendResponse(res, {
     statusCode: 200,

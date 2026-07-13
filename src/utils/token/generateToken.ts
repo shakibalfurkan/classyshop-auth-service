@@ -1,8 +1,9 @@
 import jwt from "jsonwebtoken";
+import type { UserRoles } from "../../generated/prisma/enums.js";
 
 export interface ITokenPayload {
   id: string;
-  role: string;
+  role: UserRoles[];
   email: string;
   tokenType?: "access" | "refresh" | "reset";
 }

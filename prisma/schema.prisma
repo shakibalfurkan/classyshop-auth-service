@@ -8,10 +8,10 @@ datasource db {
 }
 
 model Credential {
-  id       String    @id @default(uuid())
-  email    String    @unique
+  id       String      @id @default(uuid())
+  email    String      @unique
   password String
-  role     UserRoles @default(CUSTOMER)
+  role     UserRoles[]
 
   // ---- Replicated from user-service via events. auth-service NEVER writes these directly;
   // it only updates them when consuming a UserBlocked/UserUnblocked/UserDeleted/UserReactivated event ----
