@@ -22,7 +22,7 @@ const EmailVerificationOtpSchema = z.object({
   payload: z.object({
     firstName: z.string(),
     email: z.email(),
-    role: z.enum([UserRoles.SELLER, UserRoles.CUSTOMER]),
+    otp: z.string(),
   }),
   metadata: z.object({
     emittedAt: z.iso.datetime(),
@@ -40,8 +40,7 @@ const PasswordResetRequestedSchema = z.object({
   aggregateId: z.uuid(),
   payload: z.object({
     email: z.email(),
-    credentialId: z.uuid(),
-    resetToken: z.string(),
+    resetUiLink: z.string(),
   }),
   metadata: z.object({
     emittedAt: z.iso.datetime(),

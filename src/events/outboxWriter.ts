@@ -21,10 +21,6 @@ const eventTopicMap: Record<
   "user.unlocked": KafkaTopics.DOMAIN_EVENTS,
   "order.placed": KafkaTopics.DOMAIN_EVENTS,
   "payment.succeeded": KafkaTopics.DOMAIN_EVENTS,
-  "generate.pdf_invoice": KafkaTopics.COMMANDS,
-  "sync.user_to_crm": KafkaTopics.COMMANDS,
-  "email.send_welcome": KafkaTopics.NOTIFICATIONS,
-  "email.send_otp": KafkaTopics.NOTIFICATIONS,
   "dead_letter.event": KafkaTopics.DLQ,
 };
 

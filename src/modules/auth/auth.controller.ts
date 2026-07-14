@@ -4,16 +4,12 @@ import { AuthService } from "./auth.service.js";
 import sendResponse from "../../utils/sendResponse.js";
 import { setCookie, clearCookie } from "../../utils/cookieHandler.js";
 import { UserRoles } from "../../generated/prisma/enums.js";
-import type {
-  ILoginResult,
-  IRegisterRequestDTO,
-  IRegistrationResult,
-} from "./auth.interface.js";
+import type { IAuthResult, IRegisterRequestDTO } from "./auth.interface.js";
 
 const registerRequest = catchAsync(async (req: Request, res: Response) => {
   const payload: IRegisterRequestDTO = {
-    firstName: req.body.profile.firstName,
-    lastName: req.body.profile.lastName,
+    firstName: req.body.firstName,
+    lastName: req.body.lastName,
     email: req.body.email,
     role: req.body.role,
     password: req.body.password,
@@ -33,22 +29,23 @@ const verifyRegistration = catchAsync(async (req: Request, res: Response) => {
   const { email, otp } = req.body;
 
   const requestId = req.requestId;
+  const clientType = req.headers["X-Client-Type"];
 
-  const { accessToken, refreshToken, user } =
-    (await AuthService.verifyRegistration(requestId!, {
+  const { accessToken, refreshToken, ...credentialData } =
+    await AuthService.verifyRegistration(requestId!, {
       email,
       otp,
-    })) as IRegistrationResult;
+    });
 
-  const isCustomer = user.role === UserRoles.CUSTOMER;
+  const isCustomer = clientType === "customer-web";
 
   if (!isCustomer) {
     setCookie(res, "accessToken", accessToken!, 60 * 60 * 1000);
     setCookie(res, "refreshToken", refreshToken!, 7 * 24 * 60 * 60 * 1000);
   }
 
-  const result: IRegistrationResult = {
-    user,
+  const credentials: IAuthResult = {
+    ...credentialData,
     ...(accessToken && isCustomer && { accessToken }),
     ...(refreshToken && isCustomer && { refreshToken }),
   };
@@ -57,7 +54,7 @@ const verifyRegistration = catchAsync(async (req: Request, res: Response) => {
     statusCode: 201,
     success: true,
     message: "Registration successful",
-    data: result,
+    data: credentials,
   });
 });
 
@@ -74,42 +71,46 @@ const resendOtp = catchAsync(async (req: Request, res: Response) => {
 });
 
 const login = catchAsync(async (req: Request, res: Response) => {
-  const result = (await AuthService.login(req.body)) as ILoginResult;
+  const payload = {
+    email: req.body.email,
+    password: req.body.password,
+    role: req.body.role,
+  };
 
-  const isCustomer = result.user.role === UserRoles.CUSTOMER;
+  const clientType = req.headers["X-Client-Type"];
+
+  const { accessToken, refreshToken, ...credentialData } =
+    await AuthService.login(payload);
+
+  const isCustomer = clientType === "customer-web";
 
   if (!isCustomer) {
-    setCookie(res, "accessToken", result.accessToken!, 60 * 60 * 1000);
-    setCookie(
-      res,
-      "refreshToken",
-      result.refreshToken!,
-      7 * 24 * 60 * 60 * 1000,
-    );
+    setCookie(res, "accessToken", accessToken!, 60 * 60 * 1000);
+    setCookie(res, "refreshToken", refreshToken!, 7 * 24 * 60 * 60 * 1000);
   }
 
-  const responseData: ILoginResult = {
-    user: result.user,
-    ...(result.accessToken &&
-      isCustomer && { accessToken: result.accessToken }),
-    ...(result.refreshToken &&
-      isCustomer && { refreshToken: result.refreshToken }),
+  const credentials: IAuthResult = {
+    ...credentialData,
+    ...(accessToken && isCustomer && { accessToken }),
+    ...(refreshToken && isCustomer && { refreshToken }),
   };
 
   sendResponse(res, {
     statusCode: 200,
     success: true,
     message: "Login successful",
-    data: responseData,
+    data: credentials,
   });
 });
 
 const refreshToken = catchAsync(async (req: Request, res: Response) => {
   const token = req.cookies?.refreshToken || req.body.refreshToken;
 
+  const clientType = req.headers["X-Client-Type"];
+
   const result = await AuthService.refreshToken(token);
 
-  const isCustomer = result.role === UserRoles.CUSTOMER;
+  const isCustomer = clientType === "customer-web";
 
   if (!isCustomer) {
     setCookie(res, "accessToken", result.accessToken!, 60 * 60 * 1000);
@@ -154,7 +155,9 @@ const logout = catchAsync(async (req: Request, res: Response) => {
 
 const requestPasswordReset = catchAsync(async (req: Request, res: Response) => {
   const { email } = req.body;
-  await AuthService.requestPasswordReset(email);
+  const clientType = req.headers["X-Client-Type"];
+
+  await AuthService.requestPasswordReset(email, clientType as string);
 
   sendResponse(res, {
     statusCode: 200,

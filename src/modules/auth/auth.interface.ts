@@ -5,7 +5,7 @@ export interface IRegisterRequestDTO {
   lastName: string;
   email: string;
   password: string;
-  role: UserRoles;
+  role: "SELLER" | "CUSTOMER";
 }
 
 export interface IVerifyRegistrationDTO {
@@ -22,22 +22,10 @@ export interface ILoginDTO {
   password: string;
 }
 
-export interface IRegistrationResult {
-  user: {
-    id: string;
-    email: string;
-    role: UserRoles[];
-  };
-  accessToken?: string;
-  refreshToken?: string;
-}
-
-export interface ILoginResult {
-  user: {
-    id: string;
-    email: string;
-    role: UserRoles[];
-  };
+export interface IAuthResult {
+  id: string;
+  email: string;
+  role: UserRoles[];
   accessToken?: string;
   refreshToken?: string;
 }

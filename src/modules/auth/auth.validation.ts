@@ -37,7 +37,7 @@ const registerRequestValidationSchema = z.object({
     firstName: z.string().min(1, "First name is required"),
     lastName: z.string().min(1, "Last name is required"),
     email: emailSchema,
-    role: z.enum(["SUPER_ADMIN", "ADMIN", "VENDOR", "CUSTOMER"]),
+    role: z.enum(["SELLER", "CUSTOMER"]),
     password: passwordSchema,
   }),
 });

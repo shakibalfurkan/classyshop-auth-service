@@ -1,21 +1,16 @@
 import { prisma } from "../../lib/prisma.js";
 import type { UserRoles } from "../../generated/prisma/enums.js";
 
-export async function existsByEmailIncludingDeleted(
-  email: string,
-): Promise<boolean> {
-  const count = await prisma.credential.count({
-    where: { email },
-  });
-  return count > 0;
-}
-
 export async function findByEmail(email: string) {
   return prisma.credential.findUnique({
     where: { email },
   });
 }
-
+export async function findByEmailExcludingDeleted(email: string) {
+  return prisma.credential.findUnique({
+    where: { email, isDeleted: false },
+  });
+}
 export async function findById(id: string) {
   return prisma.credential.findUnique({
     where: { id },

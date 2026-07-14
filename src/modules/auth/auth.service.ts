@@ -19,11 +19,7 @@ import checkOtpRestrictions from "../../utils/otp/checkOtpRestrictions.js";
 import trackOtpRequests from "../../utils/otp/trackOtpRequests.js";
 import { UserRoles } from "../../generated/prisma/enums.js";
 import createInternalSignature from "../../utils/createInternalSignature.js";
-import type {
-  ILoginResult,
-  IRegistrationResult,
-  ITokenRefreshResult,
-} from "./auth.interface.js";
+import type { IAuthResult, ITokenRefreshResult } from "./auth.interface.js";
 import { createUserProfile } from "../../lib/axiosClients/userServiceClient.js";
 import { buildJwtPayload } from "../../utils/token/buildJwtPayload.js";
 import {
@@ -46,14 +42,16 @@ import {
   DomainEventTypes,
   createEventMetadata,
 } from "../../events/eventTypes.js";
+import verifyToken from "../../utils/token/verifyToken.js";
+import type { JwtPayload } from "jsonwebtoken";
+import { string } from "zod";
 
 const DNS_NAMESPACE = "6ba7b810-9dad-11d1-80b4-00c04fd430c8";
 
 const registerRequest = async (payload: TRegisterRequest) => {
   const { email, password, role, firstName, lastName } = payload;
 
-  const existingUser =
-    await AuthRepository.existsByEmailIncludingDeleted(email);
+  const existingUser = await AuthRepository.findByEmail(email);
 
   if (existingUser) {
     throw new BadRequestError("Email already in use", "email");
@@ -89,7 +87,7 @@ const registerRequest = async (payload: TRegisterRequest) => {
     payload: {
       firstName,
       email,
-      role,
+      otp,
     },
     metadata: createEventMetadata(),
   });
@@ -100,7 +98,7 @@ const registerRequest = async (payload: TRegisterRequest) => {
 const verifyRegistration = async (
   requestId: string,
   payload: { email: string; otp: string },
-) => {
+): Promise<IAuthResult> => {
   const { email, otp } = payload;
 
   const cachedData = await redisClient.get(`auth:reg:${email}`);
@@ -150,25 +148,27 @@ const verifyRegistration = async (
       ),
     );
 
-  const jwtPayload = buildJwtPayload(credential);
+  const jwtPayload = buildJwtPayload({
+    ...credential,
+    activeRole: userData.role,
+  });
 
-  const accessToken = issueAccessToken(jwtPayload);
+  const accessToken = issueAccessToken({
+    ...jwtPayload,
+    activeRole: userData.role,
+  });
   const { token: refreshToken } = await issueRefreshToken(
     jwtPayload,
     credential.id,
   );
 
-  const result: IRegistrationResult = {
-    user: {
-      id: credential.id,
-      email: credential.email,
-      role: credential.role,
-    },
+  return {
+    id: credential.id,
+    email: credential.email,
+    role: credential.role,
     accessToken,
     refreshToken,
   };
-
-  return result;
 };
 
 const resendOtp = async (email: string) => {
@@ -193,7 +193,7 @@ const resendOtp = async (email: string) => {
     payload: {
       firstName,
       email,
-      role,
+      otp,
     },
     metadata: createEventMetadata(),
   });
@@ -204,15 +204,24 @@ const resendOtp = async (email: string) => {
 const login = async (payload: {
   email: string;
   password: string;
-}): Promise<ILoginResult> => {
-  const { email, password } = payload;
+  role: UserRoles;
+}): Promise<IAuthResult> => {
+  const { email, password, role } = payload;
 
-  const credential = await prisma.credential.findUnique({
-    where: { email },
-  });
+  const credential = await AuthRepository.findByEmail(email);
 
   if (!credential) {
     throw new UnauthorizedError("Invalid email or password");
+  }
+
+  if (credential.isDeleted) {
+    throw new UnauthorizedError("Account is deleted");
+  }
+
+  if (credential.isBlocked) {
+    throw new UnauthorizedError(
+      `Account is blocked until ${credential.blockedUntil}`,
+    );
   }
 
   if (!credential.isActive) {
@@ -232,7 +241,7 @@ const login = async (payload: {
 
   await resetLoginAttempts(credential.id);
 
-  const jwtPayload = buildJwtPayload(credential);
+  const jwtPayload = buildJwtPayload({ ...credential, activeRole: role });
 
   const accessToken = issueAccessToken(jwtPayload);
   const { token: refreshToken } = await issueRefreshToken(
@@ -241,11 +250,9 @@ const login = async (payload: {
   );
 
   return {
-    user: {
-      id: credential.id,
-      email: credential.email,
-      role: credential.role,
-    },
+    id: credential.id,
+    email: credential.email,
+    role: credential.role,
     accessToken,
     refreshToken,
   };
@@ -274,9 +281,17 @@ const refreshToken = async (token: string): Promise<ITokenRefreshResult> => {
     throw new UnauthorizedError("Refresh token has expired");
   }
 
+  const decodedToken = verifyToken(
+    token,
+    config.jwt.refresh_token_secret!,
+    "refresh",
+  ) as JwtPayload;
+
+  const { activeRole } = decodedToken;
+
   await revokeRefreshToken(token);
 
-  const jwtPayload = buildJwtPayload(storedToken.credential);
+  const jwtPayload = buildJwtPayload({ ...storedToken.credential, activeRole });
   const accessToken = issueAccessToken(jwtPayload);
   const { token: newRefreshToken } = await issueRefreshToken(
     jwtPayload,
@@ -295,7 +310,10 @@ const logout = async (token: string): Promise<void> => {
   await revokeRefreshToken(token);
 };
 
-const requestPasswordReset = async (email: string): Promise<void> => {
+const requestPasswordReset = async (
+  email: string,
+  clientType: string,
+): Promise<void> => {
   const credential = await prisma.credential.findUnique({
     where: { email },
   });
@@ -323,13 +341,22 @@ const requestPasswordReset = async (email: string): Promise<void> => {
     },
   });
 
+  let resetUiLink;
+
+  if (clientType === "customer-web") {
+    resetUiLink = `${config.customer_client_url}/reset-password?resetToken=${resetToken}`;
+  } else if (clientType === "seller-web") {
+    resetUiLink = `${config.seller_client_url}/reset-password?resetToken=${resetToken}`;
+  } else if (clientType === "admin-web") {
+    resetUiLink = `${config.admin_client_url}/reset-password?resetToken=${resetToken}`;
+  }
+
   await emitDomainEvent({
     eventName: DomainEventTypes.PASSWORD_RESET_REQUESTED,
     aggregateId: credential.id,
     payload: {
       email,
-      credentialId: credential.id,
-      resetToken,
+      resetUiLink: resetUiLink as string,
     },
     metadata: createEventMetadata(),
   });
