@@ -3,6 +3,7 @@ import { AuthController } from "./auth.controller.js";
 import validateRequest from "../../middlewares/validateRequest.js";
 import { rateLimiter } from "../../middlewares/rateLimiter.js";
 import { AuthValidation } from "./auth.validation.js";
+import { authenticate } from "../../middlewares/auth.js";
 
 const router: Router = Router();
 
@@ -64,6 +65,21 @@ router.post(
   }),
   validateRequest(AuthValidation.verifyPasswordResetValidationSchema),
   AuthController.verifyPasswordReset,
+);
+
+// ─── Self-service provisioning (Task 2) ───
+router.post(
+  "/provision/seller",
+  authenticate,
+  validateRequest(AuthValidation.provisionSellerValidationSchema),
+  AuthController.provisionSeller,
+);
+
+router.post(
+  "/provision/customer",
+  authenticate,
+  validateRequest(AuthValidation.provisionCustomerValidationSchema),
+  AuthController.provisionCustomer,
 );
 
 export const AuthRoutes = router;

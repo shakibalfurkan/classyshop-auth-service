@@ -1,16 +1,21 @@
 import { redisClient } from "../../config/redis.js";
 import { BadRequestError } from "../../errors/AppError.js";
+import { OtpPurpose, type TOtpPurpose } from "../../events/eventTypes.js";
 
 const OTP_REQUEST_LIMIT = 3;
 const OTP_SPAM_BLOCK_DURATION = 60 * 60;
 const OTP_REQUEST_WINDOW = 30 * 60;
 const OTP_COOLDOWN_DURATION = 60;
 
-const trackOtpRequests = async (email: string): Promise<boolean> => {
+const trackOtpRequests = async (
+  email: string,
+  purpose: TOtpPurpose = OtpPurpose.EMAIL_VERIFICATION,
+): Promise<boolean> => {
   const normalizedEmail = email.toLowerCase().trim();
-  const otpRequestCountKey = `auth:otp_request_count:${normalizedEmail}`;
-  const otpSpamBlockKey = `auth:otp_spam_block:${normalizedEmail}`;
-  const otpCooldownKey = `auth:otp_cooldown:${normalizedEmail}`;
+  const purposeSuffix = `:${purpose}`;
+  const otpRequestCountKey = `auth:otp_request_count:${normalizedEmail}${purposeSuffix}`;
+  const otpSpamBlockKey = `auth:otp_spam_block:${normalizedEmail}${purposeSuffix}`;
+  const otpCooldownKey = `auth:otp_cooldown:${normalizedEmail}${purposeSuffix}`;
 
   const isSpamBlocked = await redisClient.get(otpSpamBlockKey);
   if (isSpamBlocked) {

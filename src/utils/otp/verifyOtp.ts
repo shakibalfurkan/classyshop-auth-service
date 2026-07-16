@@ -1,13 +1,19 @@
 import { redisClient } from "../../config/redis.js";
 import { BadRequestError } from "../../errors/AppError.js";
+import { OtpPurpose, type TOtpPurpose } from "../../events/eventTypes.js";
 
 const MAX_ATTEMPTS = 3;
 const BLOCK_TIME = 30 * 60;
 
-const verifyOtp = async (email: string, otp: string) => {
-  const blockKey = `auth:otp_block:${email}`;
-  const attemptKey = `auth:otp_attempts:${email}`;
-  const otpKey = `auth:otp:${email}`;
+const verifyOtp = async (
+  email: string,
+  otp: string,
+  purpose: TOtpPurpose = OtpPurpose.EMAIL_VERIFICATION,
+) => {
+  const purposeSuffix = `:${purpose}`;
+  const blockKey = `auth:otp_block:${email}${purposeSuffix}`;
+  const attemptKey = `auth:otp_attempts:${email}${purposeSuffix}`;
+  const otpKey = `auth:otp:${purpose}:${email}`;
 
   const isBlocked = await redisClient.get(blockKey);
   if (isBlocked) {

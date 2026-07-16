@@ -15,7 +15,21 @@ const registerRequest = catchAsync(async (req: Request, res: Response) => {
     password: req.body.password,
   };
 
-  const result = await AuthService.registerRequest(payload);
+  const clientType = req.headers["x-client-type"] as string | undefined;
+  const xForwardedFor = req.headers["x-forwarded-for"];
+  const ipAddress: string | undefined = Array.isArray(xForwardedFor)
+    ? xForwardedFor[0]
+    : (xForwardedFor ?? req.socket.remoteAddress ?? undefined);
+  const userAgent: string | undefined = req.headers["user-agent"] as
+    | string
+    | undefined;
+
+  const result = await AuthService.registerRequest(
+    payload,
+    clientType,
+    ipAddress,
+    userAgent,
+  );
 
   sendResponse(res, {
     statusCode: 200,
@@ -29,12 +43,13 @@ const verifyRegistration = catchAsync(async (req: Request, res: Response) => {
   const { email, otp } = req.body;
 
   const requestId = req.requestId;
-  const clientType = req.headers["X-Client-Type"];
+  const clientType = req.headers["x-client-type"] as string | undefined;
 
   const { accessToken, refreshToken, ...credentialData } =
     await AuthService.verifyRegistration(requestId!, {
       email,
       otp,
+      ...(clientType ? { clientType } : {}),
     });
 
   const isCustomer = clientType === "customer-web";
@@ -71,16 +86,24 @@ const resendOtp = catchAsync(async (req: Request, res: Response) => {
 });
 
 const login = catchAsync(async (req: Request, res: Response) => {
-  const payload = {
-    email: req.body.email,
-    password: req.body.password,
-    role: req.body.role,
-  };
-
-  const clientType = req.headers["X-Client-Type"];
+  const clientType = req.headers["x-client-type"] as string | undefined;
+  const xForwardedFor = req.headers["x-forwarded-for"];
+  const ipAddress: string | undefined = Array.isArray(xForwardedFor)
+    ? xForwardedFor[0]
+    : (xForwardedFor ?? req.socket.remoteAddress ?? undefined);
+  const userAgent: string | undefined = req.headers["user-agent"] as
+    | string
+    | undefined;
 
   const { accessToken, refreshToken, ...credentialData } =
-    await AuthService.login(payload);
+    await AuthService.login({
+      email: req.body.email,
+      password: req.body.password,
+      role: req.body.role,
+      clientType,
+      ...(ipAddress ? { ipAddress } : {}),
+      ...(userAgent ? { userAgent } : {}),
+    });
 
   const isCustomer = clientType === "customer-web";
 
@@ -106,7 +129,7 @@ const login = catchAsync(async (req: Request, res: Response) => {
 const refreshToken = catchAsync(async (req: Request, res: Response) => {
   const token = req.cookies?.refreshToken || req.body.refreshToken;
 
-  const clientType = req.headers["X-Client-Type"];
+  const clientType = req.headers["x-client-type"] as string | undefined;
 
   const result = await AuthService.refreshToken(token);
 
@@ -155,9 +178,9 @@ const logout = catchAsync(async (req: Request, res: Response) => {
 
 const requestPasswordReset = catchAsync(async (req: Request, res: Response) => {
   const { email } = req.body;
-  const clientType = req.headers["X-Client-Type"];
+  const clientType = req.headers["x-client-type"] as string;
 
-  await AuthService.requestPasswordReset(email, clientType as string);
+  await AuthService.requestPasswordReset(email, clientType);
 
   sendResponse(res, {
     statusCode: 200,
@@ -180,6 +203,34 @@ const verifyPasswordReset = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+// ═══════════════════════════════════════════════════════════════════
+// PROVISIONING (Task 2)
+// ═══════════════════════════════════════════════════════════════════
+
+const provisionSeller = catchAsync(async (req: Request, res: Response) => {
+  const credentialId = req.user!.id;
+  await AuthService.provisionSeller(credentialId);
+
+  sendResponse(res, {
+    statusCode: 202,
+    success: true,
+    message: "Request received, your seller account will be ready shortly",
+    data: null,
+  });
+});
+
+const provisionCustomer = catchAsync(async (req: Request, res: Response) => {
+  const credentialId = req.user!.id;
+  await AuthService.provisionCustomer(credentialId);
+
+  sendResponse(res, {
+    statusCode: 202,
+    success: true,
+    message: "Request received, your customer account will be ready shortly",
+    data: null,
+  });
+});
+
 export const AuthController = {
   registerRequest,
   verifyRegistration,
@@ -189,4 +240,6 @@ export const AuthController = {
   logout,
   requestPasswordReset,
   verifyPasswordReset,
+  provisionSeller,
+  provisionCustomer,
 };

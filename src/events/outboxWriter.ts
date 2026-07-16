@@ -9,18 +9,12 @@ const eventTopicMap: Record<
   string,
   (typeof KafkaTopics)[keyof typeof KafkaTopics]
 > = {
-  "user.registered": KafkaTopics.DOMAIN_EVENTS,
-  "user.deleted": KafkaTopics.DOMAIN_EVENTS,
-  "user.hard_deleted": KafkaTopics.DOMAIN_EVENTS,
-  "user.restored": KafkaTopics.DOMAIN_EVENTS,
-  "user.profile_updated": KafkaTopics.DOMAIN_EVENTS,
-  "user.password_changed": KafkaTopics.DOMAIN_EVENTS,
-  "user.email_changed": KafkaTopics.DOMAIN_EVENTS,
-  "user.role_changed": KafkaTopics.DOMAIN_EVENTS,
-  "user.locked": KafkaTopics.DOMAIN_EVENTS,
-  "user.unlocked": KafkaTopics.DOMAIN_EVENTS,
-  "order.placed": KafkaTopics.DOMAIN_EVENTS,
-  "payment.succeeded": KafkaTopics.DOMAIN_EVENTS,
+  "email.verification.otp.sent": KafkaTopics.DOMAIN_EVENTS,
+  "password.reset.requested": KafkaTopics.DOMAIN_EVENTS,
+  "seller.profile.requested": KafkaTopics.DOMAIN_EVENTS,
+  "customer.profile.requested": KafkaTopics.DOMAIN_EVENTS,
+  "seller.profile.created": KafkaTopics.DOMAIN_EVENTS,
+  "customer.profile.created": KafkaTopics.DOMAIN_EVENTS,
   "dead_letter.event": KafkaTopics.DLQ,
 };
 

@@ -62,7 +62,16 @@ const loginValidationSchema = z.object({
   body: z.object({
     email: emailSchema,
     password: passwordSchema,
+    role: z.enum(["customer", "seller", "admin"]),
   }),
+});
+
+const provisionSellerValidationSchema = z.object({
+  body: z.object({}),
+});
+
+const provisionCustomerValidationSchema = z.object({
+  body: z.object({}),
 });
 
 const requestPasswordResetValidationSchema = z.object({
@@ -83,6 +92,8 @@ export const AuthValidation = {
   verifyRegistrationValidationSchema,
   resendOtpValidationSchema,
   loginValidationSchema,
+  provisionSellerValidationSchema,
+  provisionCustomerValidationSchema,
   requestPasswordResetValidationSchema,
   verifyPasswordResetValidationSchema,
 };

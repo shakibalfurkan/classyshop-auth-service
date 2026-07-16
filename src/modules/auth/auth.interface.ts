@@ -20,6 +20,7 @@ export interface IResendOtpDTO {
 export interface ILoginDTO {
   email: string;
   password: string;
+  role: "customer" | "seller" | "admin";
 }
 
 export interface IAuthResult {
