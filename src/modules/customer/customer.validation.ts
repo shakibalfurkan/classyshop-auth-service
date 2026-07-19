@@ -12,7 +12,7 @@ const passwordSchema = z
   .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character")
   .trim();
 
-const CustomerRegisterSchema = z.object({
+const CustomerRegisterRequestSchema = z.object({
   body: z
     .object({
       firstName: z.string().min(1, "First name is required"),
@@ -23,6 +23,7 @@ const CustomerRegisterSchema = z.object({
       acceptTerms: z.boolean().refine((val) => val === true, {
         message: "You must accept the Terms and Conditions to register",
       }),
+      marketingOptIn: z.boolean().optional().default(false),
     })
     .refine((data) => data.password === data.confirmPassword, {
       message: "Passwords do not match",
@@ -30,6 +31,6 @@ const CustomerRegisterSchema = z.object({
     }),
 });
 
-export const CustomerValidations = {
-  CustomerRegisterSchema,
+export const CustomerValidation = {
+  CustomerRegisterRequestSchema,
 };

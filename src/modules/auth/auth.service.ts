@@ -9,7 +9,6 @@ import {
   ConflictError,
 } from "../../errors/AppError.js";
 import { prisma } from "../../lib/prisma.js";
-import type { TRegisterRequest } from "../../types/auth.types.js";
 import {
   hashPassword,
   isPasswordMatched,
